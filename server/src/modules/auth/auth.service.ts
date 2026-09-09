@@ -1,4 +1,5 @@
 import { randomUUID } from "crypto";
+import { Role } from "@prisma/client";
 
 import { prisma } from "../../db";
 import { env, isProduction } from "../../config/env";
@@ -11,19 +12,24 @@ import {
   signRefreshToken,
   verifyRefreshToken,
 } from "../../utils/jwt";
-import { LEVEL_SLUG_TO_ENUM } from "../../utils/levelMap";
 import { comparePassword, hashPassword } from "../../utils/password";
-import { Role } from "@prisma/client";
 import { toPublicUser } from "../users/user.mapper";
 import { LoginInput, RegisterInput } from "./auth.validation";
 
 const REFRESH_TOKEN_TTL_MS = parseDurationToMs(env.JWT_REFRESH_EXPIRES_IN);
 
 async function issueTokenPair(userId: string, role: Role) {
-  const accessToken = signAccessToken({ sub: userId, role });
+  const accessToken = signAccessToken({
+    sub: userId,
+    role,
+  });
 
   const tokenId = randomUUID();
-  const refreshToken = signRefreshToken({ sub: userId, tokenId });
+
+  const refreshToken = signRefreshToken({
+    sub: userId,
+    tokenId,
+  });
 
   await prisma.refreshToken.create({
     data: {
@@ -34,12 +40,20 @@ async function issueTokenPair(userId: string, role: Role) {
     },
   });
 
-  return { accessToken, refreshToken };
+  return {
+    accessToken,
+    refreshToken,
+  };
 }
 
 export const authService = {
   async register(input: RegisterInput) {
-    const existing = await prisma.user.findUnique({ where: { email: input.email } });
+    const existing = await prisma.user.findUnique({
+      where: {
+        email: input.email,
+      },
+    });
+
     if (existing) {
       throw ApiError.conflict("يوجد حساب مسجّل بهذا البريد الإلكتروني بالفعل");
     }
@@ -53,7 +67,11 @@ export const authService = {
         email: input.email,
         phone: input.phone,
         parentPhone: input.parentPhone,
-        level: LEVEL_SLUG_TO_ENUM[input.level],
+
+        studyLanguage: input.studyLanguage,
+        educationLevel: input.educationLevel,
+        grade: input.grade,
+
         passwordHash,
         avatarInitials: getInitials(input.fullName),
         role: "STUDENT",
@@ -61,31 +79,41 @@ export const authService = {
     });
 
     const tokens = await issueTokenPair(user.id, user.role);
-    return { user: toPublicUser(user), ...tokens };
+
+    return {
+      user: toPublicUser(user),
+      ...tokens,
+    };
   },
 
   async login(input: LoginInput) {
-    const user = await prisma.user.findUnique({ where: { email: input.email } });
+    const user = await prisma.user.findUnique({
+      where: {
+        email: input.email,
+      },
+    });
+
     if (!user) {
       throw ApiError.unauthorized("البريد الإلكتروني أو كلمة المرور غير صحيحة");
     }
 
     const valid = await comparePassword(input.password, user.passwordHash);
+
     if (!valid) {
       throw ApiError.unauthorized("البريد الإلكتروني أو كلمة المرور غير صحيحة");
     }
 
     const tokens = await issueTokenPair(user.id, user.role);
-    return { user: toPublicUser(user), ...tokens };
+
+    return {
+      user: toPublicUser(user),
+      ...tokens,
+    };
   },
 
-  /**
-   * Rotates a refresh token: verifies it, checks it hasn't been revoked/reused,
-   * revokes it, and issues a brand new access+refresh pair. Reusing an already
-   * -rotated token revokes the whole chain (a sign of token theft).
-   */
   async refresh(refreshToken: string) {
     let payload;
+
     try {
       payload = verifyRefreshToken(refreshToken);
     } catch {
@@ -93,22 +121,39 @@ export const authService = {
     }
 
     const tokenHash = hashToken(refreshToken);
-    const stored = await prisma.refreshToken.findUnique({ where: { tokenHash } });
+
+    const stored = await prisma.refreshToken.findUnique({
+      where: {
+        tokenHash,
+      },
+    });
 
     if (!stored || stored.userId !== payload.sub) {
       throw ApiError.unauthorized("جلسة غير صالحة، يرجى تسجيل الدخول مرة أخرى");
     }
 
     if (stored.revokedAt || stored.expiresAt < new Date()) {
-      // Token reuse or expiry detected — revoke every token for this user as a precaution.
       await prisma.refreshToken.updateMany({
-        where: { userId: stored.userId, revokedAt: null },
-        data: { revokedAt: new Date() },
+        where: {
+          userId: stored.userId,
+          revokedAt: null,
+        },
+        data: {
+          revokedAt: new Date(),
+        },
       });
-      throw ApiError.unauthorized("انتهت صلاحية الجلسة، يرجى تسجيل الدخول مرة أخرى");
+
+      throw ApiError.unauthorized(
+        "انتهت صلاحية الجلسة، يرجى تسجيل الدخول مرة أخرى",
+      );
     }
 
-    const user = await prisma.user.findUnique({ where: { id: stored.userId } });
+    const user = await prisma.user.findUnique({
+      where: {
+        id: stored.userId,
+      },
+    });
+
     if (!user) {
       throw ApiError.unauthorized();
     }
@@ -116,25 +161,48 @@ export const authService = {
     const tokens = await issueTokenPair(user.id, user.role);
 
     await prisma.refreshToken.update({
-      where: { id: stored.id },
-      data: { revokedAt: new Date(), replacedByHash: hashToken(tokens.refreshToken) },
+      where: {
+        id: stored.id,
+      },
+      data: {
+        revokedAt: new Date(),
+        replacedByHash: hashToken(tokens.refreshToken),
+      },
     });
 
-    return { user: toPublicUser(user), ...tokens };
+    return {
+      user: toPublicUser(user),
+      ...tokens,
+    };
   },
 
   async logout(refreshToken: string | undefined) {
     if (!refreshToken) return;
+
     const tokenHash = hashToken(refreshToken);
+
     await prisma.refreshToken.updateMany({
-      where: { tokenHash, revokedAt: null },
-      data: { revokedAt: new Date() },
+      where: {
+        tokenHash,
+        revokedAt: null,
+      },
+      data: {
+        revokedAt: new Date(),
+      },
     });
   },
 
   async me(userId: string) {
-    const user = await prisma.user.findUnique({ where: { id: userId } });
-    if (!user) throw ApiError.notFound("المستخدم غير موجود");
+    const user = await prisma.user.findUnique({
+      where: {
+        id: userId,
+      },
+    });
+
+    if (!user) {
+      throw ApiError.notFound("المستخدم غير موجود");
+    }
+
     return toPublicUser(user);
   },
 };

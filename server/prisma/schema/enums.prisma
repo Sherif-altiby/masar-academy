@@ -1,0 +1,15 @@
+enum Role {
+  STUDENT
+  TEACHER
+}
+
+enum ContentType {
+  AR
+  EN
+  CODE
+}
+
+enum CodeLanguage {
+  PYTHON
+  JAVASCRIPT
+}

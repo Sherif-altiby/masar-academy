@@ -1,0 +1,32 @@
+model quiz_options {
+  id             String         @id
+  question_id    String
+  text           String?
+  image_url      String?
+  order          Int
+  quiz_questions quiz_questions @relation(fields: [question_id], references: [id], onDelete: Cascade)
+}
+
+model quiz_questions {
+  id            String         @id
+  lesson_id     String
+  question      String
+  image_url     String?
+  content_type  ContentType    @default(AR)
+  code_language CodeLanguage?
+  correct_index Int
+  order         Int
+  quiz_options  quiz_options[]
+  lessons       Lesson         @relation(fields: [lesson_id], references: [id], onDelete: Cascade)
+}
+
+enum Level {
+  PRIMARY_5
+  PRIMARY_6
+  PREP_1
+  PREP_2
+  PREP_3
+  SEC_1
+  SEC_2
+  SEC_3
+}

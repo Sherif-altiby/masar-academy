@@ -42,7 +42,7 @@ export default function LoginPage() {
   }
 
   return (
-    <section className="mx-auto flex max-w-md flex-col items-center px-4 py-14 sm:py-24">
+    <section className="mx-auto flex max-w-2xl flex-col items-center px-4 py-14 sm:py-24">
       <Link href="/" className="flex items-center gap-2">
         <span className="flex size-9 items-center justify-center rounded-lg bg-primary text-primary-foreground">
           <GraduationCap className="size-5" />

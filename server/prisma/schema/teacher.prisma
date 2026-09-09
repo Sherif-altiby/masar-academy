@@ -1,0 +1,20 @@
+model TeacherProfile {
+  id                String          @id @default(uuid())
+  userId            String          @unique @map("user_id")
+  slug              String          @unique
+  title             String
+  subjectId         String          @map("subject_id")
+  yearsExperience   Int             @default(0) @map("years_experience")
+  about             String
+  credentials       String[]
+  ratingCache       Float           @default(0) @map("rating_cache")
+  reviewCountCache  Int             @default(0) @map("review_count_cache")
+  studentCountCache Int             @default(0) @map("student_count_cache")
+  createdAt         DateTime        @default(now()) @map("created_at")
+  courses           Course[]
+  subject           Subject         @relation(fields: [subjectId], references: [id])
+  user              User            @relation(fields: [userId], references: [id], onDelete: Cascade)
+  reviews           TeacherReview[]
+
+  @@map("teacher_profiles")
+}

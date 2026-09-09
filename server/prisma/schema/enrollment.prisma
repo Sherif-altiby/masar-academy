@@ -1,0 +1,13 @@
+model Enrollment {
+  id                 String   @id @default(uuid())
+  userId             String   @map("user_id")
+  courseId           String   @map("course_id")
+  progress           Int      @default(0)
+  completedLessonIds String[] @default([]) @map("completed_lesson_ids")
+  enrolledAt         DateTime @default(now()) @map("enrolled_at")
+  course             Course   @relation(fields: [courseId], references: [id], onDelete: Cascade)
+  user               User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, courseId])
+  @@map("enrollments")
+}

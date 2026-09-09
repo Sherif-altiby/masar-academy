@@ -1,0 +1,11 @@
+model Subject {
+  id          String           @id @default(uuid())
+  name        String
+  icon        String
+  description String
+  color       String
+  courses     Course[]
+  teachers    TeacherProfile[]
+
+  @@map("subjects")
+}

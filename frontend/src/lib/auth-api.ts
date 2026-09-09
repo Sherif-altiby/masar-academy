@@ -11,7 +11,9 @@ export interface RegisterPayload {
   email: string;
   phone: string;
   parentPhone: string;
-  level: string;
+  studyLanguage: string;
+  educationLevel: string;
+  grade: string;
   password: string;
 }
 
