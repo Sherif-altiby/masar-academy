@@ -305,7 +305,7 @@ export function QuizBuilderForm({
               max={60}
               value={durationMinutes}
               onChange={(e) => setDurationMinutes(Number(e.target.value))}
-              dir="ltr"
+               
               className="w-24 text-right"
             />
             <span className="text-sm text-muted-foreground">دقيقة</span>

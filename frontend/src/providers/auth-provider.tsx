@@ -18,6 +18,7 @@ interface AuthContextValue {
   login: (payload: LoginPayload) => Promise<ApiUser>;
   register: (payload: RegisterPayload) => Promise<ApiUser>;
   logout: () => Promise<void>;
+  updateUser: (user: ApiUser) => void;
 }
 
 const AuthContext = React.createContext<AuthContextValue | null>(null);
@@ -94,6 +95,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     login: (payload) => loginMutation.mutateAsync(payload).then((r) => r.user),
     register: (payload) => registerMutation.mutateAsync(payload).then((r) => r.user),
     logout: () => logoutMutation.mutateAsync().then(() => undefined),
+    updateUser: setUser,
   };
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;

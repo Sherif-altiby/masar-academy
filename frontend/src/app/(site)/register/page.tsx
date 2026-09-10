@@ -1,7 +1,6 @@
 "use client";
 
-import * as React from "react";
-import Link from "next/link";
+ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { GraduationCap, Eye, EyeOff } from "lucide-react";
 import { toast } from "sonner";
@@ -25,6 +24,7 @@ import {
 } from "@/components/ui/select";
 import { useAuth } from "@/providers/auth-provider";
 import { getApiErrorMessage } from "@/lib/get-api-error-message";
+import { useState } from "react";
 
 const EDUCATION_LEVEL_OPTIONS = [
   {
@@ -108,10 +108,10 @@ export default function RegisterPage() {
   const router = useRouter();
   const { register } = useAuth();
 
-  const [showPassword, setShowPassword] = React.useState(false);
-  const [submitting, setSubmitting] = React.useState(false);
+  const [showPassword, setShowPassword] = useState(false);
+  const [submitting, setSubmitting] = useState(false);
 
-  const [form, setForm] = React.useState({
+  const [form, setForm] = useState({
     fullName: "",
     email: "",
     phone: "",
@@ -119,7 +119,7 @@ export default function RegisterPage() {
     studyLanguage: "",
     educationLevel: "",
     grade: "",
-    password: "",
+    password: "", 
   });
 
   function update<K extends keyof typeof form>(key: K, value: string) {
@@ -233,7 +233,7 @@ export default function RegisterPage() {
                 type="email"
                 placeholder="you@example.com"
                 required
-                dir="ltr"
+                 
                 className="text-right"
                 value={form.email}
                 onChange={(e) =>
@@ -253,7 +253,7 @@ export default function RegisterPage() {
                   type="tel"
                   placeholder="01xxxxxxxxx"
                   required
-                  dir="ltr"
+                   
                   className="text-right"
                   value={form.phone}
                   onChange={(e) =>
@@ -273,7 +273,7 @@ export default function RegisterPage() {
                   type="tel"
                   placeholder="01xxxxxxxxx"
                   required
-                  dir="ltr"
+                   
                   className="text-right"
                   value={form.parentPhone}
                   onChange={(e) =>

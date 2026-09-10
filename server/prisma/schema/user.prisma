@@ -1,21 +1,23 @@
 model User {
-  id             String          @id @default(uuid())
-  fullName       String          @map("full_name")
-  email          String          @unique
-  passwordHash   String          @map("password_hash")
-  phone          String
-  parentPhone    String?         @map("parent_phone")
-  level          Level?
-  role           Role            @default(STUDENT)
-  avatarInitials String          @map("avatar_initials")
-  createdAt      DateTime        @default(now()) @map("created_at")
-  updatedAt      DateTime        @updatedAt @map("updated_at")
-  enrollments    Enrollment[]
-  platformReview PlatformReview?
-  quizAttempts   QuizAttempt[]
-  refreshTokens  RefreshToken[]
-  teacherProfile TeacherProfile?
-  teacherReviews TeacherReview[]
+  id              String          @id @default(uuid())
+  fullName        String          @map("full_name")
+  email           String          @unique
+  passwordHash    String          @map("password_hash")
+  phone           String
+  parentPhone     String?         @map("parent_phone")
+  studyLanguage   StudyLanguage?  @map("study_language")
+  educationLevel  EducationLevel? @map("education_level")
+  grade           Grade?
+  role            Role            @default(STUDENT)
+  avatarInitials  String          @map("avatar_initials")
+  createdAt       DateTime        @default(now()) @map("created_at")
+  updatedAt       DateTime        @updatedAt @map("updated_at")
+  enrollments     Enrollment[]
+  platformReview  PlatformReview?
+  quizAttempts    QuizAttempt[]
+  refreshTokens   RefreshToken[]
+  teacherProfile  TeacherProfile?
+  teacherReviews  TeacherReview[]
 
   @@map("users")
 }

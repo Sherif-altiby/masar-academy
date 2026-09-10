@@ -177,7 +177,7 @@ export default function NewCoursePage() {
                   type="number"
                   min={0}
                   placeholder="200"
-                  dir="ltr"
+                   
                   className="text-right"
                   value={price}
                   onChange={(e) => setPrice(e.target.value)}

@@ -13,8 +13,8 @@ export class ApiError extends Error {
     return new ApiError(400, message, details);
   }
 
-  static unauthorized(message = "غير مصرح لك بالدخول") {
-    return new ApiError(401, message);
+  static unauthorized(message = "غير مصرح لك بالدخول", details?: unknown) {
+    return new ApiError(401, message, details);
   }
 
   static forbidden(message = "ليس لديك صلاحية لتنفيذ هذا الإجراء") {

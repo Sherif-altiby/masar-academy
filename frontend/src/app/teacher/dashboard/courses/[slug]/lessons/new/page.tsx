@@ -143,7 +143,7 @@ export default function NewLessonPage() {
                   type="number"
                   min={1}
                   placeholder="1"
-                  dir="ltr"
+                   
                   className="text-right"
                   value={order}
                   onChange={(e) => setOrder(e.target.value)}
@@ -161,7 +161,7 @@ export default function NewLessonPage() {
                   placeholder="https://www.youtube.com/watch?v=…"
                   value={videoInput}
                   onChange={(e) => setVideoInput(e.target.value)}
-                  dir="ltr"
+                   
                   className="pr-9 text-right"
                   required
                 />

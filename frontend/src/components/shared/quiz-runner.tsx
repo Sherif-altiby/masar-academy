@@ -61,7 +61,7 @@ function QuestionPrompt({ question }: { question: ApiQuizQuestionForTaking }) {
 
       {isCode ? (
         <pre
-          dir="ltr"
+           
           className="overflow-x-auto rounded-lg bg-muted p-4 text-left font-mono text-sm leading-relaxed"
         >
           <code>{question.question}</code>

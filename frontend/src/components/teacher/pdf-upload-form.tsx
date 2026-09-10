@@ -174,7 +174,7 @@ export function PdfUploadForm({
               placeholder="8"
               value={pages}
               onChange={(e) => setPages(e.target.value)}
-              dir="ltr"
+               
               className="text-right"
             />
           </div>

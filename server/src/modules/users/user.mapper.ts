@@ -1,7 +1,5 @@
 import { User } from "@prisma/client";
 
-import { LEVEL_ENUM_TO_SLUG } from "../../utils/levelMap";
-
 export function toPublicUser(user: User) {
   return {
     id: user.id,
@@ -9,7 +7,9 @@ export function toPublicUser(user: User) {
     email: user.email,
     phone: user.phone,
     parentPhone: user.parentPhone,
-    level: user.level ? LEVEL_ENUM_TO_SLUG[user.level] : null,
+    studyLanguage: user.studyLanguage,
+    educationLevel: user.educationLevel,
+    grade: user.grade,
     role: user.role,
     avatarInitials: user.avatarInitials,
     createdAt: user.createdAt,

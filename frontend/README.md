@@ -146,14 +146,14 @@ Each `QuizQuestion` (see `src/types/index.ts`) can independently have:
 `QuizRunner` and the teacher-facing `QuizBuilderForm` use, so direction/font
 handling stays consistent between taking and building a quiz. In the builder,
 picking "English" or "Code" for a question flips that question's textarea
-and option inputs to `dir="ltr"` immediately; question and option images are
+and option inputs to ` ` immediately; question and option images are
 picked via a real file input and previewed with an object URL (nothing is
 actually uploaded anywhere, same as the standalone PDF page).
 
 ## Language and direction
 
 The whole app is in Arabic with dir="rtl" set on the html element. Email,
-phone, video-URL, and password fields are kept dir="ltr" so digits and Latin
+phone, video-URL, and password fields are kept   so digits and Latin
 characters display correctly while staying right-aligned in the form.
 
 ## Fonts
