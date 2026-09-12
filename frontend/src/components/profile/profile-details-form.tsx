@@ -21,9 +21,7 @@ import {
   EducationLevel,
   getEducationLevelLabel,
   getGradeLabel,
-  getStudyLanguageLabel,
   GRADE_OPTIONS,
-  STUDY_LANGUAGE_OPTIONS,
 } from "@/lib/education-options";
 import { getApiErrorMessage } from "@/lib/get-api-error-message";
 import { useAuth } from "@/providers/auth-provider";
@@ -34,9 +32,6 @@ export function ProfileDetailsForm({ user }: { user: ApiUser }) {
   const [email, setEmail] = React.useState(user.email);
   const [phone, setPhone] = React.useState(user.phone);
   const [parentPhone, setParentPhone] = React.useState(user.parentPhone ?? "");
-  const [studyLanguage, setStudyLanguage] = React.useState(
-    user.studyLanguage ?? ""
-  );
   const [educationLevel, setEducationLevel] = React.useState(
     user.educationLevel ?? ""
   );
@@ -48,15 +43,14 @@ export function ProfileDetailsForm({ user }: { user: ApiUser }) {
       ? GRADE_OPTIONS[educationLevel as EducationLevel]
       : [];
 
-  const studyLanguageLabel = getStudyLanguageLabel(studyLanguage);
   const educationLevelLabel = getEducationLevelLabel(educationLevel);
   const gradeLabel = getGradeLabel(grade);
 
   async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
 
-    if (!studyLanguage || !educationLevel || !grade) {
-      toast.error("يرجى تعبئة لغة الدراسة والمرحلة والصف");
+    if (!educationLevel || !grade) {
+      toast.error("يرجى تعبئة المرحلة والصف");
       return;
     }
 
@@ -67,7 +61,6 @@ export function ProfileDetailsForm({ user }: { user: ApiUser }) {
         email: email.trim(),
         phone: phone.trim(),
         parentPhone: parentPhone.trim(),
-        studyLanguage,
         educationLevel,
         grade,
       });
@@ -130,26 +123,6 @@ export function ProfileDetailsForm({ user }: { user: ApiUser }) {
             className="text-right"
           />
         </div>
-      </div>
-      <div className="space-y-2">
-        <Label htmlFor="studyLanguage">لغة الدراسة</Label>
-        <Select
-          value={studyLanguage || undefined}
-          onValueChange={setStudyLanguage}
-        >
-          <SelectTrigger id="studyLanguage" className="w-full">
-            <SelectValue placeholder="اختر لغة الدراسة">
-              {studyLanguageLabel}
-            </SelectValue>
-          </SelectTrigger>
-          <SelectContent>
-            {STUDY_LANGUAGE_OPTIONS.map((option) => (
-              <SelectItem key={option.value} value={option.value}>
-                {option.label}
-              </SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
       </div>
       <div className="space-y-2">
         <Label htmlFor="educationLevel">المرحلة الدراسية</Label>

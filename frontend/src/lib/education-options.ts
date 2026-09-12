@@ -1,8 +1,3 @@
-export const STUDY_LANGUAGE_OPTIONS = [
-  { value: "AR", label: "العربية" },
-  { value: "EN", label: "English" },
-] as const;
-
 export const EDUCATION_LEVEL_OPTIONS = [
   { value: "PREPARATORY", label: "المرحلة الإعدادية" },
   { value: "SECONDARY", label: "الثانوية العامة" },
@@ -48,10 +43,5 @@ export function getGradeLabel(grade: string | null | undefined) {
 
 export function getEducationLevelLabel(level: string | null | undefined) {
   return EDUCATION_LEVEL_OPTIONS.find((option) => option.value === level)
-    ?.label;
-}
-
-export function getStudyLanguageLabel(language: string | null | undefined) {
-  return STUDY_LANGUAGE_OPTIONS.find((option) => option.value === language)
     ?.label;
 }

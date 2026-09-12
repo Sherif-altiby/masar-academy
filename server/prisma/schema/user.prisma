@@ -5,7 +5,6 @@ model User {
   passwordHash    String          @map("password_hash")
   phone           String
   parentPhone     String?         @map("parent_phone")
-  studyLanguage   StudyLanguage?  @map("study_language")
   educationLevel  EducationLevel? @map("education_level")
   grade           Grade?
   role            Role            @default(STUDENT)

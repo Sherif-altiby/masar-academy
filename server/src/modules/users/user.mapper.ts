@@ -7,7 +7,6 @@ export function toPublicUser(user: User) {
     email: user.email,
     phone: user.phone,
     parentPhone: user.parentPhone,
-    studyLanguage: user.studyLanguage,
     educationLevel: user.educationLevel,
     grade: user.grade,
     role: user.role,

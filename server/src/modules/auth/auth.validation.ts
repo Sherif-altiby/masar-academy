@@ -1,7 +1,5 @@
 import { z } from "zod";
 
-const studyLanguages = ["AR", "EN"] as const;
-
 const educationLevels = ["PREPARATORY", "SECONDARY", "BACCALAUREATE"] as const;
 
 const grades = [
@@ -48,9 +46,6 @@ const profileFieldsSchema = z.object({
   email: z.string().trim().toLowerCase().email("البريد الإلكتروني غير صحيح"),
   phone: z.string().trim().min(8, "رقم الهاتف غير صحيح"),
   parentPhone: z.string().trim().min(8, "رقم هاتف ولي الأمر غير صحيح"),
-  studyLanguage: z.enum(studyLanguages, {
-    message: "لغة الدراسة غير صحيحة",
-  }),
   educationLevel: z.enum(educationLevels, {
     message: "المرحلة الدراسية غير صحيحة",
   }),

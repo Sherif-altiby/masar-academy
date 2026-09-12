@@ -6,7 +6,6 @@ export interface ApiUser {
   email: string;
   phone: string;
   parentPhone: string | null;
-  studyLanguage: "AR" | "EN" | null;
   educationLevel: "PREPARATORY" | "SECONDARY" | "BACCALAUREATE" | null;
   grade: string | null;
   role: ApiRole;

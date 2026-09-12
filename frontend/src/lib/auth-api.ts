@@ -11,7 +11,6 @@ export interface RegisterPayload {
   email: string;
   phone: string;
   parentPhone: string;
-  studyLanguage: string;
   educationLevel: string;
   grade: string;
   password: string;
@@ -28,7 +27,6 @@ export interface UpdateProfilePayload {
   email: string;
   phone: string;
   parentPhone: string;
-  studyLanguage: string;
   educationLevel: string;
   grade: string;
 }

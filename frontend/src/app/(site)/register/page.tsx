@@ -116,7 +116,6 @@ export default function RegisterPage() {
     email: "",
     phone: "",
     parentPhone: "",
-    studyLanguage: "",
     educationLevel: "",
     grade: "",
     password: "", 
@@ -146,11 +145,6 @@ export default function RegisterPage() {
 
   async function handleSubmit(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
-
-    if (!form.studyLanguage) {
-      toast.error("يرجى اختيار لغة الدراسة");
-      return;
-    }
 
     if (!form.educationLevel) {
       toast.error("يرجى اختيار المرحلة الدراسية");
@@ -281,37 +275,6 @@ export default function RegisterPage() {
                   }
                 />
               </div>
-            </div>
-
-            {/* Study Language */}
-            <div className="space-y-2">
-              <Label htmlFor="studyLanguage">
-                لغة الدراسة
-              </Label>
-
-              <Select
-                value={form.studyLanguage}
-                onValueChange={(value) =>
-                  update("studyLanguage", value)
-                }
-              >
-                <SelectTrigger
-                  id="studyLanguage"
-                  className="w-full"
-                >
-                  <SelectValue placeholder="اختر لغة الدراسة" />
-                </SelectTrigger>
-
-                <SelectContent>
-                  <SelectItem value="AR">
-                    العربية
-                  </SelectItem>
-
-                  <SelectItem value="EN">
-                    English
-                  </SelectItem>
-                </SelectContent>
-              </Select>
             </div>
 
             {/* Education Level */}
