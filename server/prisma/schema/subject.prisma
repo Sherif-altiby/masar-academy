@@ -3,6 +3,7 @@ model Subject {
   name        String
   icon        String
   description String
+  imageUrl   String
   color       String
   courses     Course[]
   teachers    TeacherProfile[]

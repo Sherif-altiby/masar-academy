@@ -29,6 +29,7 @@ export interface Subject {
   name: string;
   icon: string; // lucide icon name
   description: string;
+  imageUrl: string;
   color: "chart-1" | "chart-2" | "chart-3" | "chart-4" | "chart-5";
   courseCount: number;
   studentCount: number;

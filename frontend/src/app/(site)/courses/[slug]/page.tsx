@@ -2,12 +2,22 @@
 
 import Link from "next/link";
 import { useParams } from "next/navigation";
-import { FileText, HelpCircle, Loader2, Lock, PlayCircle, Users } from "lucide-react";
+import {
+  ArrowLeft,
+  BookOpen,
+  CheckCircle2,
+  FileText,
+  HelpCircle,
+  Lock,
+  PlayCircle,
+  Users,
+} from "lucide-react";
 
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
+import { Skeleton } from "@/components/ui/skeleton";
 import { StarRating } from "@/components/shared/star-rating";
 import { useCourse } from "@/hooks/use-courses";
 import { cn } from "@/lib/utils";
@@ -17,104 +27,286 @@ export default function CoursePage() {
   const { data: course, isLoading, isError } = useCourse(params.slug);
 
   if (isLoading) {
-    return (
-      <div className="flex min-h-[60vh] items-center justify-center">
-        <Loader2 className="size-6 animate-spin text-muted-foreground" />
-      </div>
-    );
+    return <CoursePageSkeleton />;
   }
 
   if (isError || !course) {
     return (
-      <div className="mx-auto max-w-md px-4 py-24 text-center">
-        <p className="font-medium">تعذّر العثور على هذه الدورة</p>
-        <Button variant="outline" className="mt-4" asChild>
-          <Link href="/subjects">تصفّح المواد الدراسية</Link>
+      <div className="mx-auto flex min-h-[60vh] max-w-md flex-col items-center justify-center px-4 text-center">
+        <div className="flex size-14 items-center justify-center rounded-2xl bg-destructive/10 text-destructive">
+          <BookOpen className="size-6" />
+        </div>
+
+        <h1 className="mt-5 text-lg font-semibold">
+          تعذّر العثور على هذه الدورة
+        </h1>
+
+        <p className="mt-2 text-sm leading-6 text-muted-foreground">
+          قد تكون الدورة غير متاحة حاليًا أو تم نقلها إلى مكان آخر.
+        </p>
+
+        <Button variant="outline" className="mt-5" asChild>
+          <Link href="/subjects">
+            تصفّح المواد الدراسية
+            <ArrowLeft className="mr-2 size-4" />
+          </Link>
         </Button>
       </div>
     );
   }
 
-  const completedCount = 1; // sample progress — no enrollment/progress endpoint yet
+  // Sample progress — replace with real enrollment/progress data later.
+  const completedCount = 1;
+  const progress =
+    course.lessonCount > 0
+      ? Math.round((completedCount / course.lessonCount) * 100)
+      : 0;
 
   return (
-    <section className="mx-auto max-w-4xl px-4 py-12 sm:px-6 sm:py-16">
-      <div className="max-w-2xl">
+    <section className="mx-auto max-w-5xl px-4 py-8 sm:px-6 sm:py-12">
+      {/* Breadcrumb */}
+      <div className="mb-6 flex items-center gap-2 text-sm text-muted-foreground">
+        <Link
+          href="/subjects"
+          className="transition-colors hover:text-foreground"
+        >
+          المواد الدراسية
+        </Link>
+
+        <span>/</span>
+
         <Link
           href={`/teachers/${course.teacherSlug}`}
-          className="text-sm font-medium text-primary hover:underline"
+          className="transition-colors hover:text-foreground"
         >
           {course.teacherName}
         </Link>
-        <h1 className="mt-2 font-display text-3xl font-semibold tracking-tight sm:text-4xl">
-          {course.title}
-        </h1>
-        <p className="mt-3 text-muted-foreground">{course.description}</p>
 
-        <div className="mt-4 flex flex-wrap items-center gap-4 text-sm">
-          <span className="flex items-center gap-1.5">
-            <StarRating value={course.rating} size={15} />
-            <span className="font-medium">{course.rating.toFixed(1)}</span>
-          </span>
-          <span className="flex items-center gap-1.5 text-muted-foreground">
-            <Users className="size-4" /> {course.studentCount.toLocaleString()}{" "}
-            طالب مسجّل
-          </span>
-        </div>
+        <span>/</span>
+
+        <span className="truncate text-foreground">{course.title}</span>
       </div>
 
-      <Card className="mt-8 gap-2 p-5">
-        <div className="flex items-center justify-between text-sm">
-          <span className="font-medium">تقدّمك</span>
-          <span className="text-muted-foreground">
-            {completedCount} / {course.lessonCount} دروس
-          </span>
+      {/* Course Hero */}
+      <Card className="overflow-hidden">
+        <div className="border-b bg-muted/30 px-5 py-6 sm:px-8 sm:py-8">
+          <div className="max-w-3xl">
+            <Link
+              href={`/teachers/${course.teacherSlug}`}
+              className="inline-flex items-center gap-2 text-sm font-medium text-primary transition-colors hover:underline"
+            >
+              {course.teacherName}
+              <ArrowLeft className="size-3.5" />
+            </Link>
+
+            <h1 className="mt-3 font-display text-3xl font-semibold tracking-tight sm:text-4xl">
+              {course.title}
+            </h1>
+
+            <p className="mt-4 max-w-2xl leading-7 text-muted-foreground">
+              {course.description}
+            </p>
+
+            <div className="mt-5 flex flex-wrap items-center gap-x-5 gap-y-3 text-sm">
+              <div className="flex items-center gap-2">
+                <StarRating value={course.rating} size={15} />
+                <span className="font-semibold">
+                  {course.rating.toFixed(1)}
+                </span>
+              </div>
+
+              <div className="h-4 w-px bg-border" />
+
+              <span className="flex items-center gap-1.5 text-muted-foreground">
+                <Users className="size-4" />
+                {course.studentCount.toLocaleString()} طالب مسجّل
+              </span>
+
+              <div className="h-4 w-px bg-border" />
+
+              <span className="flex items-center gap-1.5 text-muted-foreground">
+                <BookOpen className="size-4" />
+                {course.lessonCount} درس
+              </span>
+            </div>
+          </div>
         </div>
-        <Progress value={(completedCount / course.lessonCount) * 100} />
+
+        {/* Progress */}
+        <div className="px-5 py-5 sm:px-8">
+          <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+            <div>
+              <div className="flex items-center gap-2">
+                <CheckCircle2 className="size-4 text-primary" />
+                <span className="text-sm font-semibold">تقدّمك في الدورة</span>
+              </div>
+
+              <p className="mt-1 text-xs text-muted-foreground">
+                استمر في التعلّم وأكمل دروسك بالترتيب.
+              </p>
+            </div>
+
+            <span className="text-sm font-medium">
+              {completedCount} / {course.lessonCount}
+            </span>
+          </div>
+
+          <Progress value={progress} className="mt-4 h-2" />
+
+          <div className="mt-2 flex justify-between text-xs text-muted-foreground">
+            <span>{progress}% مكتمل</span>
+            <span>{course.lessonCount - completedCount} دروس متبقية</span>
+          </div>
+        </div>
       </Card>
 
-      <div className="mt-10 space-y-3">
-        <h2 className="font-display text-xl font-semibold">الدروس</h2>
+      {/* Lessons */}
+      <div className="mt-10">
+        <div className="mb-5 flex items-end justify-between gap-4">
+          <div>
+            <p className="text-sm font-medium text-primary">محتوى الدورة</p>
+            <h2 className="mt-1 font-display text-2xl font-semibold">
+              الدروس
+            </h2>
+          </div>
+
+          <span className="rounded-full bg-muted px-3 py-1.5 text-xs font-medium text-muted-foreground">
+            {course.lessonCount} درس
+          </span>
+        </div>
+
         <div className="space-y-3">
           {course.lessons.map((lesson) => {
             const locked = !lesson.isFree && lesson.order > 2;
+            const isCompleted = lesson.order <= completedCount;
 
             const content = (
               <Card
                 className={cn(
-                  "flex-row items-center gap-4 p-4 transition-all duration-200",
-                  !locked && "hover:-translate-y-0.5 hover:shadow-md"
+                  "group relative overflow-hidden transition-all duration-200",
+                  !locked &&
+                    "hover:-translate-y-0.5 hover:border-primary/30 hover:shadow-md",
+                  locked && "bg-muted/20"
                 )}
               >
-                <span className="flex size-10 shrink-0 items-center justify-center rounded-lg bg-secondary text-xs font-semibold text-secondary-foreground">
-                  {String(lesson.order).padStart(2, "0")}
-                </span>
-                <span className="flex size-9 shrink-0 items-center justify-center rounded-full bg-primary/10 text-primary">
-                  {locked ? (
-                    <Lock className="size-4" />
-                  ) : (
-                    <PlayCircle className="size-4" />
-                  )}
-                </span>
-                <div className="min-w-0 flex-1">
-                  <p className="truncate font-medium">{lesson.title}</p>
-                  <p className="text-sm text-muted-foreground">
-                    {lesson.description}
-                  </p>
+                <div className="flex items-center gap-3 p-4 sm:gap-4 sm:p-5">
+                  {/* Lesson Number */}
+                  <span
+                    className={cn(
+                      "flex size-10 shrink-0 items-center justify-center rounded-xl text-xs font-semibold",
+                      isCompleted
+                        ? "bg-primary text-primary-foreground"
+                        : "bg-secondary text-secondary-foreground"
+                    )}
+                  >
+                    {isCompleted ? (
+                      <CheckCircle2 className="size-4" />
+                    ) : (
+                      String(lesson.order).padStart(2, "0")
+                    )}
+                  </span>
+
+                  {/* Lesson Icon */}
+                  <span
+                    className={cn(
+                      "flex size-10 shrink-0 items-center justify-center rounded-full",
+                      locked
+                        ? "bg-muted text-muted-foreground"
+                        : "bg-primary/10 text-primary"
+                    )}
+                  >
+                    {locked ? (
+                      <Lock className="size-4" />
+                    ) : (
+                      <PlayCircle className="size-4" />
+                    )}
+                  </span>
+
+                  {/* Content */}
+                  <div className="min-w-0 flex-1">
+                    <div className="flex flex-wrap items-center gap-2">
+                      <p className="font-medium transition-colors group-hover:text-primary">
+                        {lesson.title}
+                      </p>
+
+                      {lesson.isFree && !locked && (
+                        <Badge
+                          variant="secondary"
+                          className="text-[10px] font-medium"
+                        >
+                          مجاني
+                        </Badge>
+                      )}
+                    </div>
+
+                    <p className="mt-1 line-clamp-1 text-sm text-muted-foreground">
+                      {lesson.description}
+                    </p>
+                  </div>
+
+                  {/* Meta */}
+                  <div className="hidden shrink-0 flex-col items-end gap-2 sm:flex">
+                    <div className="flex items-center gap-1.5">
+                      {lesson.hasPdf && (
+                        <Badge
+                          variant="secondary"
+                          className="gap-1 text-[10px]"
+                        >
+                          <FileText className="size-3" />
+                          PDF
+                        </Badge>
+                      )}
+
+                      {lesson.hasQuiz && (
+                        <Badge
+                          variant="accent"
+                          className="gap-1 text-[10px]"
+                        >
+                          <HelpCircle className="size-3" />
+                          اختبار
+                        </Badge>
+                      )}
+                    </div>
+
+                    <span className="text-xs text-muted-foreground">
+                      {lesson.duration}
+                    </span>
+                  </div>
+
+                  <ArrowLeft
+                    className={cn(
+                      "hidden size-4 shrink-0 transition-all sm:block",
+                      locked
+                        ? "text-muted-foreground"
+                        : "text-muted-foreground group-hover:-translate-x-1 group-hover:text-primary"
+                    )}
+                  />
                 </div>
-                <div className="flex shrink-0 flex-col items-end gap-1.5">
+
+                {/* Mobile Meta */}
+                <div className="flex items-center justify-between border-t px-4 py-2.5 sm:hidden">
                   <div className="flex items-center gap-1.5">
                     {lesson.hasPdf && (
-                      <Badge variant="secondary" className="gap-1">
-                        <FileText className="size-3" /> PDF
+                      <Badge
+                        variant="secondary"
+                        className="gap-1 text-[10px]"
+                      >
+                        <FileText className="size-3" />
+                        PDF
                       </Badge>
                     )}
+
                     {lesson.hasQuiz && (
-                      <Badge variant="accent" className="gap-1">
-                        <HelpCircle className="size-3" /> اختبار
+                      <Badge
+                        variant="accent"
+                        className="gap-1 text-[10px]"
+                      >
+                        <HelpCircle className="size-3" />
+                        اختبار
                       </Badge>
                     )}
                   </div>
+
                   <span className="text-xs text-muted-foreground">
                     {lesson.duration}
                   </span>
@@ -123,11 +315,19 @@ export default function CoursePage() {
             );
 
             return locked ? (
-              <div key={lesson.id} className="cursor-not-allowed opacity-60">
+              <div
+                key={lesson.id}
+                className="cursor-not-allowed opacity-60"
+                title="هذا الدرس غير متاح حاليًا"
+              >
                 {content}
               </div>
             ) : (
-              <Link key={lesson.id} href={`/courses/${course.slug}/lessons/${lesson.id}`}>
+              <Link
+                key={lesson.id}
+                href={`/courses/${course.slug}/lessons/${lesson.id}`}
+                className="block"
+              >
                 {content}
               </Link>
             );
@@ -137,3 +337,97 @@ export default function CoursePage() {
     </section>
   );
 }
+
+/* -------------------------------------------------------------------------- */
+/* Skeleton                                                                    */
+/* -------------------------------------------------------------------------- */
+
+function CoursePageSkeleton() {
+  return (
+    <section className="mx-auto max-w-5xl px-4 py-8 sm:px-6 sm:py-12">
+      {/* Breadcrumb */}
+      <div className="mb-6 flex items-center gap-2">
+        <Skeleton className="h-4 w-24" />
+        <Skeleton className="size-3 rounded-full" />
+        <Skeleton className="h-4 w-28" />
+        <Skeleton className="size-3 rounded-full" />
+        <Skeleton className="h-4 w-36" />
+      </div>
+
+      {/* Hero */}
+      <Card className="overflow-hidden">
+        <div className="border-b bg-muted/20 px-5 py-6 sm:px-8 sm:py-8">
+          <Skeleton className="h-4 w-32" />
+
+          <Skeleton className="mt-4 h-10 w-full max-w-2xl sm:h-11" />
+
+          <Skeleton className="mt-4 h-4 w-full max-w-xl" />
+          <Skeleton className="mt-2 h-4 w-4/5 max-w-lg" />
+
+          <div className="mt-5 flex flex-wrap gap-5">
+            <Skeleton className="h-5 w-24" />
+            <Skeleton className="h-5 w-32" />
+            <Skeleton className="h-5 w-24" />
+          </div>
+        </div>
+
+        {/* Progress Skeleton */}
+        <div className="px-5 py-5 sm:px-8">
+          <div className="flex items-center justify-between">
+            <div>
+              <Skeleton className="h-4 w-32" />
+              <Skeleton className="mt-2 h-3 w-48" />
+            </div>
+
+            <Skeleton className="h-4 w-12" />
+          </div>
+
+          <Skeleton className="mt-4 h-2 w-full rounded-full" />
+
+          <div className="mt-2 flex justify-between">
+            <Skeleton className="h-3 w-16" />
+            <Skeleton className="h-3 w-24" />
+          </div>
+        </div>
+      </Card>
+
+      {/* Lessons Header */}
+      <div className="mb-5 mt-10 flex items-end justify-between">
+        <div>
+          <Skeleton className="h-4 w-24" />
+          <Skeleton className="mt-2 h-7 w-20" />
+        </div>
+
+        <Skeleton className="h-7 w-16 rounded-full" />
+      </div>
+
+      {/* Lessons */}
+      <div className="space-y-3">
+        {Array.from({ length: 6 }).map((_, index) => (
+          <Card key={index} className="p-4 sm:p-5">
+            <div className="flex items-center gap-3 sm:gap-4">
+              <Skeleton className="size-10 shrink-0 rounded-xl" />
+              <Skeleton className="size-10 shrink-0 rounded-full" />
+
+              <div className="min-w-0 flex-1">
+                <Skeleton className="h-4 w-2/3 max-w-64" />
+                <Skeleton className="mt-2 h-3 w-full max-w-80" />
+              </div>
+
+              <div className="hidden flex-col items-end gap-2 sm:flex">
+                <div className="flex gap-1.5">
+                  <Skeleton className="h-5 w-12 rounded-full" />
+                  <Skeleton className="h-5 w-14 rounded-full" />
+                </div>
+                <Skeleton className="h-3 w-12" />
+              </div>
+
+              <Skeleton className="hidden size-4 shrink-0 sm:block" />
+            </div>
+          </Card>
+        ))}
+      </div>
+    </section>
+  );
+}
+ 

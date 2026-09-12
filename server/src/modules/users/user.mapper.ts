@@ -11,6 +11,7 @@ export function toPublicUser(user: User) {
     grade: user.grade,
     role: user.role,
     avatarInitials: user.avatarInitials,
+    avatarUrl: user.avatarUrl,
     createdAt: user.createdAt,
   };
 }

@@ -10,6 +10,7 @@ export interface ApiUser {
   grade: string | null;
   role: ApiRole;
   avatarInitials: string;
+  avatarUrl: string | null;
   createdAt: string;
 }
 
@@ -18,6 +19,7 @@ export interface ApiSubject {
   name: string;
   icon: string;
   description: string;
+  imageUrl: string;
   color: string;
   courseCount: number;
   studentCount: number;
@@ -28,6 +30,7 @@ export interface ApiTeacherSummary {
   name: string;
   slug: string;
   avatarInitials: string;
+  avatarUrl: string | null;
   title: string;
   subjectId: string;
   subjectName: string;

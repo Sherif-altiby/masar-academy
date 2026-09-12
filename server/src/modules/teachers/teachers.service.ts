@@ -18,6 +18,7 @@ function mapTeacherSummary(teacher: TeacherWithUserAndSubject) {
     name: teacher.user.fullName,
     slug: teacher.slug,
     avatarInitials: teacher.user.avatarInitials,
+    avatarUrl: teacher.user.avatarUrl ?? null,
     title: teacher.title,
     subjectId: teacher.subjectId,
     subjectName: teacher.subject.name,

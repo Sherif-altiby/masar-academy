@@ -2,13 +2,14 @@ import Link from "next/link";
 import { Users } from "lucide-react";
 
 import { Card } from "@/components/ui/card";
-import { Avatar, AvatarFallback } from "@/components/ui/avatar";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { StarRating } from "@/components/shared/star-rating";
 
 interface TeacherCardData {
   slug: string;
   avatarInitials: string;
+  avatarUrl?: string | null;
   name: string;
   title: string;
   subjectName: string;
@@ -22,6 +23,9 @@ export function TeacherCard({ teacher }: { teacher: TeacherCardData }) {
     <Link href={`/teachers/${teacher.slug}`} className="group block h-full">
       <Card className="h-full items-center gap-3 p-6 text-center transition-all duration-200 hover:-translate-y-0.5 hover:shadow-md">
         <Avatar className="size-20 border-2 border-secondary">
+          {teacher.avatarUrl ? (
+            <AvatarImage src={teacher.avatarUrl} alt={teacher.name} />
+          ) : null}
           <AvatarFallback className="bg-secondary text-lg font-semibold text-secondary-foreground">
             {teacher.avatarInitials}
           </AvatarFallback>

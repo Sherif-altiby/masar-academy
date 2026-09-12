@@ -15,6 +15,7 @@ export const subjectsService = {
       name: subject.name,
       icon: subject.icon,
       description: subject.description,
+      imageUrl: subject.imageUrl,
       color: subject.color,
       courseCount: subject._count.courses,
       studentCount: subject.courses.reduce((sum, c) => sum + c.studentCountCache, 0),
@@ -24,6 +25,9 @@ export const subjectsService = {
   async getById(id: string) {
     const subject = await prisma.subject.findUnique({ where: { id } });
     if (!subject) throw ApiError.notFound("المادة الدراسية غير موجودة");
-    return subject;
+    return {
+      ...subject,
+      imageUrl: subject.imageUrl,
+    };
   },
 };

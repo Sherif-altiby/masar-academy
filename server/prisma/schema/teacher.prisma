@@ -3,6 +3,7 @@ model TeacherProfile {
   userId            String          @unique @map("user_id")
   slug              String          @unique
   title             String
+  avatarUrl         String          @map("avatar_url")
   subjectId         String          @map("subject_id")
   yearsExperience   Int             @default(0) @map("years_experience")
   about             String

@@ -1,58 +1,105 @@
 /**
- * Prisma seed script
- * -------------------
+ * Prisma seed script (TypeScript)
+ * -------------------------------
  * Seeds: 5 Subjects, 10 Teachers (User + TeacherProfile), 15 Students,
  * ~20 Courses, Lessons per course, quiz_questions/quiz_options for some
  * lessons, Enrollments, QuizAttempts, TeacherReviews, PlatformReviews,
  * and a couple of RefreshTokens.
  *
- * Usage:
- *   npm install @prisma/client bcryptjs
- *   node prisma/seed.js
+ * Usage (Prisma ORM 7 requires a driver adapter — this uses Postgres):
+ *   npm install @prisma/client @prisma/adapter-pg bcryptjs dotenv
+ *   npm install -D typescript tsx @types/node @types/bcryptjs
+ *   npx tsx prisma/seed.ts
  *
- * Or wire it up as the official Prisma seed command by adding to package.json:
- *   "prisma": { "seed": "node prisma/seed.js" }
+ * Make sure DATABASE_URL is set in your .env file — this script loads it
+ * itself via `dotenv/config` since tsx/node don't auto-load .env like the
+ * Prisma CLI does.
+ *
+ * Or wire it up as the official Prisma seed command in package.json:
+ *   "prisma": { "seed": "tsx prisma/seed.ts" }
  * then run: npx prisma db seed
  */
 
-const { PrismaClient } = require("@prisma/client");
-const bcrypt = require("bcryptjs");
-const crypto = require("crypto");
+import "dotenv/config";
+import {
+  PrismaClient,
+  EducationLevel,
+  Grade,
+  Level,
+  ContentType,
+  CodeLanguage,
+  Lesson,
+  Subject,
+  TeacherProfile,
+  User,
+  Enrollment,
+} from "@prisma/client";
+import { PrismaPg } from "@prisma/adapter-pg";
+import bcrypt from "bcryptjs";
+import crypto from "crypto";
 
-const prisma = new PrismaClient();
+// Prisma ORM 7 removed the built-in query engine — a driver adapter is now
+// required to connect to the database. Swap PrismaPg for the adapter that
+// matches your datasource provider if it isn't PostgreSQL (e.g.
+// @prisma/adapter-mysql, @prisma/adapter-libsql, @prisma/adapter-planetscale).
+const adapter = new PrismaPg({ connectionString: process.env.DATABASE_URL });
+const prisma = new PrismaClient({ adapter });
 
 // ---------------------------------------------------------------------------
 // Helpers
 // ---------------------------------------------------------------------------
 
-const uuid = () => crypto.randomUUID();
+const uuid = (): string => crypto.randomUUID();
 
-function randomInt(min, max) {
+function randomInt(min: number, max: number): number {
   return Math.floor(Math.random() * (max - min + 1)) + min;
 }
 
-function randomFloat(min, max, decimals = 1) {
+function randomFloat(min: number, max: number, decimals = 1): number {
   const val = Math.random() * (max - min) + min;
   return parseFloat(val.toFixed(decimals));
 }
 
-function randomChoice(arr) {
+function randomChoice<T>(arr: T[]): T {
   return arr[randomInt(0, arr.length - 1)];
 }
 
-function randomSubset(arr, count) {
+function randomSubset<T>(arr: T[], count: number): T[] {
   const shuffled = [...arr].sort(() => 0.5 - Math.random());
   return shuffled.slice(0, Math.min(count, arr.length));
 }
 
-function slugify(str) {
+function slugify(str: string): string {
   return str
     .toLowerCase()
     .replace(/[^a-z0-9]+/g, "-")
     .replace(/(^-|-$)/g, "");
 }
 
-function initials(fullName) {
+// Deterministic placeholder cover image per course (no API key required).
+// The slug is used as the picsum.photos seed, so re-running the script with
+// the same slug always yields the same image — swap this out for real
+// uploaded/CDN URLs whenever you have actual course artwork.
+function courseImageUrl(slug: string): string {
+  return `https://picsum.photos/seed/${encodeURIComponent(slug)}/800/450`;
+}
+
+// Same idea, sized for a subject banner/cover image.
+function subjectImageUrl(name: string): string {
+  return `https://picsum.photos/seed/${encodeURIComponent(slugify(name))}/600/400`;
+}
+
+// Same idea, sized for a lesson video thumbnail.
+function lessonThumbnailUrl(seed: string): string {
+  return `https://picsum.photos/seed/${encodeURIComponent(seed)}/640/360`;
+}
+
+// Deterministic placeholder avatar (person photo) for users/teachers.
+function avatarUrl(seed: string): string {
+  return `https://i.pravatar.cc/300?u=${encodeURIComponent(seed)}`;
+}
+
+function initials(fullName: string): string {
   return fullName
     .split(" ")
     .map((p) => p[0])
@@ -65,7 +112,14 @@ function initials(fullName) {
 // Static reference data
 // ---------------------------------------------------------------------------
 
-const SUBJECTS_DATA = [
+interface SubjectSeed {
+  name: string;
+  icon: string;
+  color: string;
+  description: string;
+}
+
+const SUBJECTS_DATA: SubjectSeed[] = [
   {
     name: "Mathematics",
     icon: "calculator",
@@ -102,8 +156,17 @@ const SUBJECTS_DATA = [
   },
 ];
 
+interface TeacherSeed {
+  fullName: string;
+  subjectIndex: number;
+  title: string;
+  yearsExperience: number;
+  credentials: string[];
+  about: string;
+}
+
 // 2 teachers per subject (10 total), index into SUBJECTS_DATA
-const TEACHERS_DATA = [
+const TEACHERS_DATA: TeacherSeed[] = [
   {
     fullName: "Ahmed El-Sayed",
     subjectIndex: 0,
@@ -155,8 +218,7 @@ const TEACHERS_DATA = [
     title: "Organic Chemistry Specialist",
     yearsExperience: 8,
     credentials: ["Helwan University - B.Sc. Chemistry"],
-    about:
-      "Salma makes organic chemistry mechanisms intuitive with visual reaction maps.",
+    about: "Salma makes organic chemistry mechanisms intuitive with visual reaction maps.",
   },
   {
     fullName: "Omar Khaled",
@@ -195,16 +257,16 @@ const TEACHERS_DATA = [
   },
 ];
 
-const STUDENT_NAMES = [
+const STUDENT_NAMES: string[] = [
   "Malak Sherif", "Ziad Mahmoud", "Farida Adly", "Hassan Fouad",
   "Jana Wael", "Adam Ashraf", "Rana Tamer", "Yousef Emad",
   "Laila Nasser", "Mostafa Reda", "Habiba Amr", "Ali Osama",
   "Nada Waleed", "Mahmoud Sami", "Sara Gamal",
 ];
 
-const EDUCATION_LEVELS = ["PREPARATORY", "SECONDARY", "BACCALAUREATE"];
+const EDUCATION_LEVELS: EducationLevel[] = ["PREPARATORY", "SECONDARY", "BACCALAUREATE"];
 
-const GRADES_BY_LEVEL = {
+const GRADES_BY_LEVEL: Record<EducationLevel, Grade[]> = {
   PREPARATORY: ["PREP_1", "PREP_2", "PREP_3"],
   SECONDARY: ["SEC_1", "SEC_2", "SEC_3_MATH", "SEC_3_SCIENCE", "SEC_3_LITERATURE"],
   BACCALAUREATE: [
@@ -216,7 +278,7 @@ const GRADES_BY_LEVEL = {
   ],
 };
 
-const COURSE_LEVELS = [
+const COURSE_LEVELS: Level[] = [
   "PRIMARY_5",
   "PRIMARY_6",
   "PREP_1",
@@ -227,7 +289,7 @@ const COURSE_LEVELS = [
   "SEC_3",
 ];
 
-const COURSE_TITLE_TEMPLATES = [
+const COURSE_TITLE_TEMPLATES: string[] = [
   "Complete {subject} Foundations",
   "{subject} Mastery Course",
   "{subject} for Beginners",
@@ -236,7 +298,7 @@ const COURSE_TITLE_TEMPLATES = [
   "{subject} Deep Dive",
 ];
 
-const LESSON_TITLES = [
+const LESSON_TITLES: string[] = [
   "Introduction & Overview",
   "Core Concepts Explained",
   "Worked Examples",
@@ -247,11 +309,24 @@ const LESSON_TITLES = [
   "Chapter Summary & Review",
 ];
 
+// Local helper types for objects we build up as we go
+type TeacherWithRelations = TeacherProfile & { subject: Subject; user: User };
+type CourseWithTeacher = {
+  id: string;
+  teacher: TeacherWithRelations;
+  [key: string]: unknown;
+};
+type EnrollmentWithRelations = Enrollment & {
+  course: CourseWithTeacher;
+  student: User;
+  lessons: Lesson[];
+};
+
 // ---------------------------------------------------------------------------
 // Main seed logic
 // ---------------------------------------------------------------------------
 
-async function main() {
+async function main(): Promise<void> {
   console.log("Cleaning existing data...");
   // Delete in dependency-safe order
   await prisma.quiz_options.deleteMany();
@@ -271,17 +346,18 @@ async function main() {
 
   // --- Subjects ------------------------------------------------------------
   console.log("Creating subjects...");
-  const subjects = [];
+  const subjects: Subject[] = [];
   for (const s of SUBJECTS_DATA) {
-    const subject = await prisma.subject.create({ data: s });
+    const subject = await prisma.subject.create({
+      data: { ...s, imageUrl: subjectImageUrl(s.name) },
+    });
     subjects.push(subject);
   }
 
   // --- Teachers (User + TeacherProfile) ------------------------------------
   console.log("Creating teachers...");
-  const teacherProfiles = [];
-  for (let i = 0; i < TEACHERS_DATA.length; i++) {
-    const t = TEACHERS_DATA[i];
+  const teacherProfiles: TeacherWithRelations[] = [];
+  for (const t of TEACHERS_DATA) {
     const subject = subjects[t.subjectIndex];
     const email = `${slugify(t.fullName)}@eduplatform.test`;
 
@@ -293,6 +369,7 @@ async function main() {
         phone: `01${randomInt(0, 2)}${randomInt(10000000, 99999999)}`,
         role: "TEACHER",
         avatarInitials: initials(t.fullName),
+        avatarUrl: avatarUrl(email),
       },
     });
 
@@ -304,6 +381,7 @@ async function main() {
         subjectId: subject.id,
         yearsExperience: t.yearsExperience,
         about: t.about,
+        avatarUrl: avatarUrl(`teacher-${slugify(t.fullName)}`),
         credentials: t.credentials,
         // caches recomputed at the end of the script
       },
@@ -314,10 +392,10 @@ async function main() {
 
   // --- Students --------------------------------------------------------------
   console.log("Creating students...");
-  const students = [];
+  const students: User[] = [];
   for (const fullName of STUDENT_NAMES) {
-    const educationLevel = randomChoice(EDUCATION_LEVELS);
-    const grade = randomChoice(GRADES_BY_LEVEL[educationLevel]);
+    const educationLevel: EducationLevel = randomChoice(EDUCATION_LEVELS);
+    const grade: Grade = randomChoice(GRADES_BY_LEVEL[educationLevel]);
     const email = `${slugify(fullName)}@student.test`;
 
     const user = await prisma.user.create({
@@ -326,11 +404,15 @@ async function main() {
         email,
         passwordHash,
         phone: `01${randomInt(0, 2)}${randomInt(10000000, 99999999)}`,
-        parentPhone: Math.random() > 0.3 ? `01${randomInt(0, 2)}${randomInt(10000000, 99999999)}` : null,
+        parentPhone:
+          Math.random() > 0.3
+            ? `01${randomInt(0, 2)}${randomInt(10000000, 99999999)}`
+            : null,
         educationLevel,
         grade,
         role: "STUDENT",
         avatarInitials: initials(fullName),
+        avatarUrl: avatarUrl(email),
       },
     });
 
@@ -339,8 +421,8 @@ async function main() {
 
   // --- Courses + Lessons + Quizzes -----------------------------------------
   console.log("Creating courses, lessons and quizzes...");
-  const courses = [];
-  const lessonsByCourse = {}; // courseId -> lesson[]
+  const courses: CourseWithTeacher[] = [];
+  const lessonsByCourse: Record<string, Lesson[]> = {};
 
   for (const teacher of teacherProfiles) {
     const coursesForTeacher = randomInt(2, 3);
@@ -348,13 +430,18 @@ async function main() {
     for (let c = 0; c < coursesForTeacher; c++) {
       const titleTemplate = randomChoice(COURSE_TITLE_TEMPLATES);
       const title = titleTemplate.replace("{subject}", teacher.subject.name);
-      const uniqueTitle = `${title} (${teacher.user.fullName.split(" ")[0]}${c > 0 ? ` ${c + 1}` : ""})`;
+      const uniqueTitle = `${title} (${teacher.user.fullName.split(" ")[0]}${
+        c > 0 ? ` ${c + 1}` : ""
+      })`;
+
+      const courseSlug = `${slugify(uniqueTitle)}-${randomInt(100, 999)}`;
 
       const course = await prisma.course.create({
         data: {
-          slug: `${slugify(uniqueTitle)}-${randomInt(100, 999)}`,
+          slug: courseSlug,
           title: uniqueTitle,
           description: `A comprehensive ${teacher.subject.name} course covering everything students need, taught by ${teacher.user.fullName}.`,
+          imageUrl: courseImageUrl(courseSlug),
           subjectId: teacher.subject.id,
           teacherId: teacher.id,
           level: randomChoice(COURSE_LEVELS),
@@ -362,12 +449,13 @@ async function main() {
         },
       });
 
-      courses.push({ ...course, teacher });
+      const courseWithTeacher: CourseWithTeacher = { ...course, teacher };
+      courses.push(courseWithTeacher);
 
       // Lessons
       const lessonCount = randomInt(4, 8);
       const shuffledTitles = randomSubset(LESSON_TITLES, lessonCount);
-      const lessons = [];
+      const lessons: Lesson[] = [];
 
       for (let l = 0; l < lessonCount; l++) {
         const hasQuiz = Math.random() > 0.4;
@@ -380,8 +468,11 @@ async function main() {
             order: l + 1,
             duration: `${randomInt(5, 25)}:${String(randomInt(0, 59)).padStart(2, "0")}`,
             isFree: l === 0, // first lesson free as a preview
-            description: `In this lesson, students explore ${(shuffledTitles[l] || "the topic").toLowerCase()} within ${teacher.subject.name}.`,
+            description: `In this lesson, students explore ${(
+              shuffledTitles[l] || "the topic"
+            ).toLowerCase()} within ${teacher.subject.name}.`,
             videoId: `vid_${uuid().slice(0, 12)}`,
+            thumbnailUrl: lessonThumbnailUrl(`${course.slug}-lesson-${l + 1}`),
             hasPdf,
             pdfUrl: hasPdf ? `https://cdn.eduplatform.test/pdfs/${uuid()}.pdf` : null,
             pdfPages: hasPdf ? randomInt(3, 20) : null,
@@ -397,9 +488,10 @@ async function main() {
           const questionCount = randomInt(3, 5);
 
           for (let q = 0; q < questionCount; q++) {
-            const contentType = teacher.subject.name === "Computer Science" && Math.random() > 0.5
-              ? "CODE"
-              : "AR";
+            const contentType: ContentType =
+              teacher.subject.name === "Computer Science" && Math.random() > 0.5
+                ? "CODE"
+                : "AR";
 
             const question = await prisma.quiz_questions.create({
               data: {
@@ -407,7 +499,10 @@ async function main() {
                 lesson_id: lesson.id,
                 question: `Question ${q + 1}: What is true about "${lesson.title}" in ${teacher.subject.name}?`,
                 content_type: contentType,
-                code_language: contentType === "CODE" ? randomChoice(["PYTHON", "JAVASCRIPT"]) : null,
+                code_language:
+                  contentType === "CODE"
+                    ? randomChoice<CodeLanguage>(["PYTHON", "JAVASCRIPT"])
+                    : null,
                 correct_index: 0, // set after options creation below
                 order: q + 1,
               },
@@ -421,9 +516,10 @@ async function main() {
                 data: {
                   id: uuid(),
                   question_id: question.id,
-                  text: o === correctIndex
-                    ? `Correct answer for question ${q + 1}`
-                    : `Distractor option ${o + 1}`,
+                  text:
+                    o === correctIndex
+                      ? `Correct answer for question ${q + 1}`
+                      : `Distractor option ${o + 1}`,
                   order: o + 1,
                 },
               });
@@ -443,7 +539,7 @@ async function main() {
 
   // --- Enrollments -----------------------------------------------------------
   console.log("Creating enrollments...");
-  const enrollments = []; // { studentId, courseId, courseObj }
+  const enrollments: EnrollmentWithRelations[] = [];
 
   for (const student of students) {
     const enrollCount = randomInt(2, 5);
@@ -471,7 +567,9 @@ async function main() {
   // --- Quiz attempts -----------------------------------------------------------
   console.log("Creating quiz attempts...");
   for (const enr of enrollments) {
-    const quizLessons = enr.lessons.filter((l) => l.hasQuiz && enr.completedLessonIds.includes(l.id));
+    const quizLessons = enr.lessons.filter(
+      (l) => l.hasQuiz && enr.completedLessonIds.includes(l.id)
+    );
 
     for (const lesson of quizLessons) {
       const questions = await prisma.quiz_questions.findMany({
@@ -484,9 +582,12 @@ async function main() {
       const correctCount = randomInt(Math.ceil(totalQuestions * 0.3), totalQuestions);
       const score = Math.round((correctCount / totalQuestions) * 100);
 
-      const answers = questions.map((q, idx) => ({
+      const answers = questions.map((q, idx: number) => ({
         questionId: q.id,
-        selectedIndex: idx < correctCount ? q.correct_index : (q.correct_index + 1) % q.quiz_options.length,
+        selectedIndex:
+          idx < correctCount
+            ? q.correct_index
+            : (q.correct_index + 1) % q.quiz_options.length,
         isCorrect: idx < correctCount,
       }));
 
@@ -506,7 +607,7 @@ async function main() {
 
   // --- Teacher reviews ---------------------------------------------------------
   console.log("Creating teacher reviews...");
-  const reviewedPairs = new Set();
+  const reviewedPairs = new Set<string>();
   for (const enr of enrollments) {
     const key = `${enr.course.teacher.id}:${enr.student.id}`;
     if (reviewedPairs.has(key)) continue;
@@ -518,7 +619,7 @@ async function main() {
         teacherId: enr.course.teacher.id,
         studentId: enr.student.id,
         rating: randomInt(3, 5),
-        comment: randomChoice([
+        comment: randomChoice<string | null>([
           "Explains concepts very clearly, highly recommend!",
           "Great teacher, lessons are easy to follow.",
           "Helped me improve my grades a lot.",
@@ -537,7 +638,7 @@ async function main() {
       data: {
         studentId: student.id,
         rating: randomInt(3, 5),
-        comment: randomChoice([
+        comment: randomChoice<string | null>([
           "Love the platform, very easy to use.",
           "Great selection of courses and teachers.",
           "The quizzes really help me retain the material.",
@@ -549,11 +650,16 @@ async function main() {
 
   // --- Refresh tokens (a couple of sample sessions) --------------------------
   console.log("Creating sample refresh tokens...");
-  for (const user of [...teacherProfiles.slice(0, 2).map((t) => t.user), ...students.slice(0, 3)]) {
+  const sampleUsers: User[] = [
+    ...teacherProfiles.slice(0, 2).map((t) => t.user),
+    ...students.slice(0, 3),
+  ];
+  for (const user of sampleUsers) {
+    const tokenHash = await bcrypt.hash(uuid(), 10);
     await prisma.refreshToken.create({
       data: {
         userId: user.id,
-        tokenHash: crypto.createHash("sha256").update(uuid()).digest("hex"),
+        tokenHash,
         expiresAt: new Date(Date.now() + 1000 * 60 * 60 * 24 * 30), // +30 days
       },
     });
@@ -578,9 +684,8 @@ async function main() {
   for (const teacher of teacherProfiles) {
     const reviews = await prisma.teacherReview.findMany({ where: { teacherId: teacher.id } });
     const reviewCount = reviews.length;
-    const avgRating = reviewCount > 0
-      ? reviews.reduce((sum, r) => sum + r.rating, 0) / reviewCount
-      : 0;
+    const avgRating =
+      reviewCount > 0 ? reviews.reduce((sum, r) => sum + r.rating, 0) / reviewCount : 0;
 
     const teacherCourses = await prisma.course.findMany({ where: { teacherId: teacher.id } });
     const courseIds = teacherCourses.map((c) => c.id);
@@ -612,6 +717,7 @@ async function main() {
 main()
   .catch((e) => {
     console.error("Seed failed:", e);
+    process.exit(1);
   })
   .finally(async () => {
     await prisma.$disconnect();

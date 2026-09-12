@@ -3,6 +3,7 @@ model Course {
   slug              String         @unique
   title             String
   description       String
+  imageUrl          String         @map("image_url")
   subjectId         String         @map("subject_id")
   teacherId         String         @map("teacher_id")
   level             Level

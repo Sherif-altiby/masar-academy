@@ -13,6 +13,7 @@ function mapCourseSummary(course: {
   slug: string;
   title: string;
   description: string;
+  imageUrl: string;
   subjectId: string;
   teacherId: string;
   level: Level;
@@ -26,6 +27,7 @@ function mapCourseSummary(course: {
     slug: course.slug,
     title: course.title,
     description: course.description,
+    imageUrl: course.imageUrl,
     subjectId: course.subjectId,
     teacherId: course.teacherId,
     level: LEVEL_ENUM_TO_SLUG[course.level],
@@ -105,6 +107,7 @@ export const coursesService = {
         teacherId: teacherProfileId,
         level: LEVEL_SLUG_TO_ENUM[input.level],
         price: input.price,
+        imageUrl: input.imageUrl,
       },
       include: { _count: { select: { lessons: true } } },
     });
