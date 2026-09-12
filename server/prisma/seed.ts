@@ -1,498 +1,617 @@
-import "dotenv/config";
+/**
+ * Prisma seed script
+ * -------------------
+ * Seeds: 5 Subjects, 10 Teachers (User + TeacherProfile), 15 Students,
+ * ~20 Courses, Lessons per course, quiz_questions/quiz_options for some
+ * lessons, Enrollments, QuizAttempts, TeacherReviews, PlatformReviews,
+ * and a couple of RefreshTokens.
+ *
+ * Usage:
+ *   npm install @prisma/client bcryptjs
+ *   node prisma/seed.js
+ *
+ * Or wire it up as the official Prisma seed command by adding to package.json:
+ *   "prisma": { "seed": "node prisma/seed.js" }
+ * then run: npx prisma db seed
+ */
 
-import { prisma } from "../src/db";
-import { hashPassword } from "../src/utils/password";
-import { getInitials } from "../src/utils/initials";
+const { PrismaClient } = require("@prisma/client");
+const bcrypt = require("bcryptjs");
+const crypto = require("crypto");
 
-const PLACEHOLDER_VIDEO_ID = "aqz-KE-bpKQ";
-const DEMO_PASSWORD = "password123";
+const prisma = new PrismaClient();
 
-async function seed() {
-  console.log("🌱 Seeding Masar Academy database…");
+// ---------------------------------------------------------------------------
+// Helpers
+// ---------------------------------------------------------------------------
 
-  // -------------------------------------------------------------------
-  // Subjects
-  // -------------------------------------------------------------------
-  const [math, science, english, , computer] = await Promise.all([
-    prisma.subject.create({
-      data: { name: "الرياضيات", icon: "Sigma", description: "الجبر والهندسة وحل المسائل خطوة بخطوة.", color: "chart-1" },
-    }),
-    prisma.subject.create({
-      data: { name: "العلوم", icon: "FlaskConical", description: "الفيزياء والكيمياء والأحياء مشروحة بأمثلة واقعية.", color: "chart-2" },
-    }),
-    prisma.subject.create({
-      data: { name: "اللغة الإنجليزية", icon: "BookOpenText", description: "القواعد والفهم والتعبير الكتابي بأسلوب واضح.", color: "chart-3" },
-    }),
-    prisma.subject.create({
-      data: { name: "اللغة العربية", icon: "Languages", description: "قواعد النحو والأدب وأساسيات التعبير الكتابي.", color: "chart-4" },
-    }),
-    prisma.subject.create({
-      data: { name: "علوم الحاسب", icon: "Code2", description: "منطق البرمجة وأساسيات الحاسوب من الصفر.", color: "chart-5" },
-    }),
-    prisma.subject.create({
-      data: { name: "الدراسات الاجتماعية", icon: "Globe2", description: "التاريخ والجغرافيا في قالب قصصي يسهل تذكّره.", color: "chart-1" },
-    }),
-  ]);
-  console.log("  ✓ 6 subjects");
+const uuid = () => crypto.randomUUID();
 
-  // -------------------------------------------------------------------
-  // Teacher users + profiles
-  // -------------------------------------------------------------------
-  const passwordHash = await hashPassword(DEMO_PASSWORD);
+function randomInt(min, max) {
+  return Math.floor(Math.random() * (max - min + 1)) + min;
+}
 
-  const teacherSeeds = [
-    {
-      fullName: "أحمد السيد",
-      email: "ahmed.elsayed@masar-academy.com",
-      slug: "ahmed-el-sayed",
-      title: "مدرّس أول للرياضيات",
-      subjectId: math.id,
-      yearsExperience: 14,
-      about:
-        "قضى أحمد أكثر من عشر سنوات في تحويل الجبر والهندسة من مادة مرعبة إلى مادة يتطلع الطلاب لدراستها فعلاً. يقسّم كل درس إلى خطوات صغيرة قابلة للاختبار، مع اختبار قصير في نهاية كل درس حتى لا يفوت الطالب أي تفصيلة.",
-      credentials: [
-        "بكالوريوس رياضيات، جامعة القاهرة",
-        "14 عامًا من الخبرة في التدريس",
-        "مؤلف سلسلة كتيبات 'الجبر ببساطة'",
-      ],
-    },
-    {
-      fullName: "منى فتحي",
-      email: "mona.fathy@masar-academy.com",
-      slug: "mona-fathy",
-      title: "مدرّسة فيزياء وكيمياء",
-      subjectId: science.id,
-      yearsExperience: 10,
-      about:
-        "تؤمن منى بأن العلوم يجب أن تُرى لا أن تُحفظ فقط. يبدأ كل درس بتجربة قصيرة من واقع الحياة قبل الانتقال إلى المعادلات وراءها.",
-      credentials: [
-        "ماجستير في الفيزياء التطبيقية، جامعة عين شمس",
-        "10 أعوام من الخبرة في التدريس",
-        "مراجعة سابقة للمناهج بوزارة التربية والتعليم",
-      ],
-    },
-    {
-      fullName: "سارة إبراهيم",
-      email: "sara.ibrahim@masar-academy.com",
-      slug: "sara-ibrahim",
-      title: "مدرّسة لغة إنجليزية",
-      subjectId: english.id,
-      yearsExperience: 8,
-      about:
-        "تركّز سارة على الأمرين اللذين يرفعان الدرجات بأسرع شكل: دقة القواعد والثقة في الكتابة.",
-      credentials: [
-        "بكالوريوس آداب لغة إنجليزية، جامعة الإسكندرية",
-        "حاصلة على شهادة CELTA",
-        "8 أعوام من الخبرة في التدريس",
-      ],
-    },
-    {
-      fullName: "حسن أبو الفتوح",
-      email: "hassan.aboulfotouh@masar-academy.com",
-      slug: "hassan-aboul-fotouh",
-      title: "مدرّس علوم حاسب",
-      subjectId: computer.id,
-      yearsExperience: 6,
-      about:
-        "يعلّم حسن البرمجة بالطريقة التي كان يتمنى أن يتعلمها بها: ببناء أشياء صغيرة وفعلية منذ اليوم الأول.",
-      credentials: [
-        "بكالوريوس هندسة حاسبات، جامعة القاهرة",
-        "6 أعوام من الخبرة في التدريس",
-        "مهندس برمجيات سابق",
-      ],
-    },
-  ];
+function randomFloat(min, max, decimals = 1) {
+  const val = Math.random() * (max - min) + min;
+  return parseFloat(val.toFixed(decimals));
+}
 
-  const teacherProfilesById: Record<string, string> = {}; // slug -> teacherProfile.id
+function randomChoice(arr) {
+  return arr[randomInt(0, arr.length - 1)];
+}
 
-  for (const t of teacherSeeds) {
+function randomSubset(arr, count) {
+  const shuffled = [...arr].sort(() => 0.5 - Math.random());
+  return shuffled.slice(0, Math.min(count, arr.length));
+}
+
+function slugify(str) {
+  return str
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, "-")
+    .replace(/(^-|-$)/g, "");
+}
+
+function initials(fullName) {
+  return fullName
+    .split(" ")
+    .map((p) => p[0])
+    .join("")
+    .toUpperCase()
+    .slice(0, 2);
+}
+
+// ---------------------------------------------------------------------------
+// Static reference data
+// ---------------------------------------------------------------------------
+
+const SUBJECTS_DATA = [
+  {
+    name: "Mathematics",
+    icon: "calculator",
+    color: "#3B82F6",
+    description:
+      "Algebra, geometry, calculus and problem-solving fundamentals for every stage.",
+  },
+  {
+    name: "Physics",
+    icon: "atom",
+    color: "#8B5CF6",
+    description:
+      "Mechanics, electricity, waves and modern physics explained with real experiments.",
+  },
+  {
+    name: "Chemistry",
+    icon: "flask",
+    color: "#10B981",
+    description:
+      "Organic, inorganic and physical chemistry with lab-based intuition.",
+  },
+  {
+    name: "Biology",
+    icon: "dna",
+    color: "#F59E0B",
+    description: "Cell biology, genetics, physiology and ecology made visual.",
+  },
+  {
+    name: "Computer Science",
+    icon: "code",
+    color: "#EF4444",
+    description:
+      "Programming fundamentals, algorithms and computational thinking.",
+  },
+];
+
+// 2 teachers per subject (10 total), index into SUBJECTS_DATA
+const TEACHERS_DATA = [
+  {
+    fullName: "Ahmed El-Sayed",
+    subjectIndex: 0,
+    title: "Senior Mathematics Instructor",
+    yearsExperience: 12,
+    credentials: ["Cairo University - B.Sc. Mathematics", "Certified STEM Trainer"],
+    about:
+      "Ahmed has spent over a decade helping students master mathematics through simplified, exam-focused techniques.",
+  },
+  {
+    fullName: "Mona Fathy",
+    subjectIndex: 0,
+    title: "Mathematics Curriculum Lead",
+    yearsExperience: 9,
+    credentials: ["Ain Shams University - M.Sc. Applied Mathematics"],
+    about:
+      "Mona specializes in breaking down advanced calculus and algebra topics into digestible lessons.",
+  },
+  {
+    fullName: "Karim Abdel Rahman",
+    subjectIndex: 1,
+    title: "Physics Instructor",
+    yearsExperience: 10,
+    credentials: ["Alexandria University - B.Sc. Physics"],
+    about:
+      "Karim brings physics to life through hands-on demonstrations and real-world problem sets.",
+  },
+  {
+    fullName: "Nourhan Adel",
+    subjectIndex: 1,
+    title: "Physics & Applied Sciences Tutor",
+    yearsExperience: 7,
+    credentials: ["Mansoura University - B.Sc. Physics", "IB Physics Certified"],
+    about:
+      "Nourhan focuses on conceptual understanding before formula memorization.",
+  },
+  {
+    fullName: "Youssef Hassan",
+    subjectIndex: 2,
+    title: "Chemistry Instructor",
+    yearsExperience: 14,
+    credentials: ["Cairo University - M.Sc. Chemistry"],
+    about:
+      "Youssef has taught chemistry to thousands of secondary and baccalaureate students.",
+  },
+  {
+    fullName: "Salma Ibrahim",
+    subjectIndex: 2,
+    title: "Organic Chemistry Specialist",
+    yearsExperience: 8,
+    credentials: ["Helwan University - B.Sc. Chemistry"],
+    about:
+      "Salma makes organic chemistry mechanisms intuitive with visual reaction maps.",
+  },
+  {
+    fullName: "Omar Khaled",
+    subjectIndex: 3,
+    title: "Biology Instructor",
+    yearsExperience: 11,
+    credentials: ["Cairo University - B.Sc. Biology"],
+    about:
+      "Omar's lessons blend molecular biology with clear diagrams and memory techniques.",
+  },
+  {
+    fullName: "Heba Mostafa",
+    subjectIndex: 3,
+    title: "Biology & Genetics Tutor",
+    yearsExperience: 6,
+    credentials: ["Zagazig University - B.Sc. Biology"],
+    about: "Heba is passionate about genetics and human physiology education.",
+  },
+  {
+    fullName: "Tarek Nabil",
+    subjectIndex: 4,
+    title: "Computer Science Instructor",
+    yearsExperience: 9,
+    credentials: ["German University in Cairo - B.Sc. Computer Science"],
+    about:
+      "Tarek teaches programming fundamentals using Python and JavaScript with project-based learning.",
+  },
+  {
+    fullName: "Dina Samir",
+    subjectIndex: 4,
+    title: "Software & Algorithms Tutor",
+    yearsExperience: 5,
+    credentials: ["Cairo University - B.Sc. Computer Engineering"],
+    about:
+      "Dina focuses on algorithmic thinking and clean coding practices for beginners.",
+  },
+];
+
+const STUDENT_NAMES = [
+  "Malak Sherif", "Ziad Mahmoud", "Farida Adly", "Hassan Fouad",
+  "Jana Wael", "Adam Ashraf", "Rana Tamer", "Yousef Emad",
+  "Laila Nasser", "Mostafa Reda", "Habiba Amr", "Ali Osama",
+  "Nada Waleed", "Mahmoud Sami", "Sara Gamal",
+];
+
+const EDUCATION_LEVELS = ["PREPARATORY", "SECONDARY", "BACCALAUREATE"];
+
+const GRADES_BY_LEVEL = {
+  PREPARATORY: ["PREP_1", "PREP_2", "PREP_3"],
+  SECONDARY: ["SEC_1", "SEC_2", "SEC_3_MATH", "SEC_3_SCIENCE", "SEC_3_LITERATURE"],
+  BACCALAUREATE: [
+    "BAC_1",
+    "BAC_2_ENGINEERING_CS",
+    "BAC_2_MEDICINE_LIFE",
+    "BAC_2_BUSINESS",
+    "BAC_2_ARTS",
+  ],
+};
+
+const COURSE_LEVELS = [
+  "PRIMARY_5",
+  "PRIMARY_6",
+  "PREP_1",
+  "PREP_2",
+  "PREP_3",
+  "SEC_1",
+  "SEC_2",
+  "SEC_3",
+];
+
+const COURSE_TITLE_TEMPLATES = [
+  "Complete {subject} Foundations",
+  "{subject} Mastery Course",
+  "{subject} for Beginners",
+  "Advanced {subject} Bootcamp",
+  "{subject} Exam Preparation",
+  "{subject} Deep Dive",
+];
+
+const LESSON_TITLES = [
+  "Introduction & Overview",
+  "Core Concepts Explained",
+  "Worked Examples",
+  "Common Mistakes to Avoid",
+  "Practice Problems",
+  "Advanced Applications",
+  "Exam-Style Questions",
+  "Chapter Summary & Review",
+];
+
+// ---------------------------------------------------------------------------
+// Main seed logic
+// ---------------------------------------------------------------------------
+
+async function main() {
+  console.log("Cleaning existing data...");
+  // Delete in dependency-safe order
+  await prisma.quiz_options.deleteMany();
+  await prisma.quiz_questions.deleteMany();
+  await prisma.quizAttempt.deleteMany();
+  await prisma.enrollment.deleteMany();
+  await prisma.lesson.deleteMany();
+  await prisma.teacherReview.deleteMany();
+  await prisma.platformReview.deleteMany();
+  await prisma.refreshToken.deleteMany();
+  await prisma.course.deleteMany();
+  await prisma.teacherProfile.deleteMany();
+  await prisma.user.deleteMany();
+  await prisma.subject.deleteMany();
+
+  const passwordHash = await bcrypt.hash("Password123!", 10);
+
+  // --- Subjects ------------------------------------------------------------
+  console.log("Creating subjects...");
+  const subjects = [];
+  for (const s of SUBJECTS_DATA) {
+    const subject = await prisma.subject.create({ data: s });
+    subjects.push(subject);
+  }
+
+  // --- Teachers (User + TeacherProfile) ------------------------------------
+  console.log("Creating teachers...");
+  const teacherProfiles = [];
+  for (let i = 0; i < TEACHERS_DATA.length; i++) {
+    const t = TEACHERS_DATA[i];
+    const subject = subjects[t.subjectIndex];
+    const email = `${slugify(t.fullName)}@eduplatform.test`;
+
     const user = await prisma.user.create({
       data: {
         fullName: t.fullName,
-        email: t.email,
+        email,
         passwordHash,
-        phone: "01000000000",
+        phone: `01${randomInt(0, 2)}${randomInt(10000000, 99999999)}`,
         role: "TEACHER",
-        avatarInitials: getInitials(t.fullName),
+        avatarInitials: initials(t.fullName),
       },
     });
 
-    const profile = await prisma.teacherProfile.create({
+    const teacherProfile = await prisma.teacherProfile.create({
       data: {
         userId: user.id,
-        slug: t.slug,
+        slug: slugify(t.fullName),
         title: t.title,
-        subjectId: t.subjectId,
+        subjectId: subject.id,
         yearsExperience: t.yearsExperience,
         about: t.about,
         credentials: t.credentials,
+        // caches recomputed at the end of the script
       },
     });
 
-    teacherProfilesById[t.slug] = profile.id;
+    teacherProfiles.push({ ...teacherProfile, subject, user });
   }
-  console.log(`  ✓ ${teacherSeeds.length} teachers`);
 
-  // -------------------------------------------------------------------
-  // Demo student
-  // -------------------------------------------------------------------
-  await prisma.user.create({
-    data: {
-      fullName: "يوسف مصطفى",
-      email: "youssef.mostafa@example.com",
-      passwordHash,
-      phone: "01000000001",
-      parentPhone: "01000000002",
-      level: "SEC_1",
-      role: "STUDENT",
-      avatarInitials: getInitials("يوسف مصطفى"),
-    },
-  });
-  console.log("  ✓ 1 demo student");
+  // --- Students --------------------------------------------------------------
+  console.log("Creating students...");
+  const students = [];
+  for (const fullName of STUDENT_NAMES) {
+    const educationLevel = randomChoice(EDUCATION_LEVELS);
+    const grade = randomChoice(GRADES_BY_LEVEL[educationLevel]);
+    const email = `${slugify(fullName)}@student.test`;
 
-  // -------------------------------------------------------------------
-  // Courses + lessons + quizzes
-  // -------------------------------------------------------------------
-  async function createCourse(opts: {
-    slug: string;
-    title: string;
-    description: string;
-    subjectId: string;
-    teacherId: string;
-    level: "PRIMARY_5" | "PRIMARY_6" | "PREP_1" | "PREP_2" | "PREP_3" | "SEC_1" | "SEC_2" | "SEC_3";
-    studentCount: number;
-    rating: number;
-  }) {
-    return prisma.course.create({
+    const user = await prisma.user.create({
       data: {
-        slug: opts.slug,
-        title: opts.title,
-        description: opts.description,
-        subjectId: opts.subjectId,
-        teacherId: opts.teacherId,
-        level: opts.level,
-        studentCountCache: opts.studentCount,
-        ratingCache: opts.rating,
+        fullName,
+        email,
+        passwordHash,
+        phone: `01${randomInt(0, 2)}${randomInt(10000000, 99999999)}`,
+        parentPhone: Math.random() > 0.3 ? `01${randomInt(0, 2)}${randomInt(10000000, 99999999)}` : null,
+        educationLevel,
+        grade,
+        role: "STUDENT",
+        avatarInitials: initials(fullName),
       },
     });
+
+    students.push(user);
   }
 
-  async function createLesson(
-    courseId: string,
-    opts: {
-      title: string;
-      order: number;
-      duration: string;
-      isFree: boolean;
-      description: string;
-      hasPdf?: boolean;
-      pdfPages?: number;
-      quizDurationSeconds?: number;
-    }
-  ) {
-    return prisma.lesson.create({
-      data: {
-        courseId,
-        title: opts.title,
-        order: opts.order,
-        duration: opts.duration,
-        isFree: opts.isFree,
-        description: opts.description,
-        videoId: PLACEHOLDER_VIDEO_ID,
-        hasPdf: opts.hasPdf ?? false,
-        pdfPages: opts.pdfPages,
-        hasQuiz: Boolean(opts.quizDurationSeconds),
-        quizDurationSeconds: opts.quizDurationSeconds,
-      },
-    });
-  }
+  // --- Courses + Lessons + Quizzes -----------------------------------------
+  console.log("Creating courses, lessons and quizzes...");
+  const courses = [];
+  const lessonsByCourse = {}; // courseId -> lesson[]
 
-  async function createQuestion(
-    lessonId: string,
-    opts: {
-      question: string;
-      order: number;
-      correctIndex: number;
-      contentType?: "AR" | "EN" | "CODE";
-      codeLanguage?: "PYTHON" | "JAVASCRIPT";
-      imageUrl?: string;
-      options: { text?: string; imageUrl?: string }[];
-    }
-  ) {
-    await prisma.quizQuestion.create({
-      data: {
-        lessonId,
-        question: opts.question,
-        order: opts.order,
-        correctIndex: opts.correctIndex,
-        contentType: opts.contentType ?? "AR",
-        codeLanguage: opts.codeLanguage,
-        imageUrl: opts.imageUrl,
-        options: {
-          create: opts.options.map((o, i) => ({ text: o.text, imageUrl: o.imageUrl, order: i })),
+  for (const teacher of teacherProfiles) {
+    const coursesForTeacher = randomInt(2, 3);
+
+    for (let c = 0; c < coursesForTeacher; c++) {
+      const titleTemplate = randomChoice(COURSE_TITLE_TEMPLATES);
+      const title = titleTemplate.replace("{subject}", teacher.subject.name);
+      const uniqueTitle = `${title} (${teacher.user.fullName.split(" ")[0]}${c > 0 ? ` ${c + 1}` : ""})`;
+
+      const course = await prisma.course.create({
+        data: {
+          slug: `${slugify(uniqueTitle)}-${randomInt(100, 999)}`,
+          title: uniqueTitle,
+          description: `A comprehensive ${teacher.subject.name} course covering everything students need, taught by ${teacher.user.fullName}.`,
+          subjectId: teacher.subject.id,
+          teacherId: teacher.id,
+          level: randomChoice(COURSE_LEVELS),
+          price: randomChoice([0, 150, 250, 350, 500]),
         },
+      });
+
+      courses.push({ ...course, teacher });
+
+      // Lessons
+      const lessonCount = randomInt(4, 8);
+      const shuffledTitles = randomSubset(LESSON_TITLES, lessonCount);
+      const lessons = [];
+
+      for (let l = 0; l < lessonCount; l++) {
+        const hasQuiz = Math.random() > 0.4;
+        const hasPdf = Math.random() > 0.5;
+
+        const lesson = await prisma.lesson.create({
+          data: {
+            courseId: course.id,
+            title: shuffledTitles[l] || `Lesson ${l + 1}`,
+            order: l + 1,
+            duration: `${randomInt(5, 25)}:${String(randomInt(0, 59)).padStart(2, "0")}`,
+            isFree: l === 0, // first lesson free as a preview
+            description: `In this lesson, students explore ${(shuffledTitles[l] || "the topic").toLowerCase()} within ${teacher.subject.name}.`,
+            videoId: `vid_${uuid().slice(0, 12)}`,
+            hasPdf,
+            pdfUrl: hasPdf ? `https://cdn.eduplatform.test/pdfs/${uuid()}.pdf` : null,
+            pdfPages: hasPdf ? randomInt(3, 20) : null,
+            hasQuiz,
+            quizDurationSeconds: hasQuiz ? randomInt(300, 900) : null,
+          },
+        });
+
+        lessons.push(lesson);
+
+        // Quiz questions + options for lessons that have a quiz
+        if (hasQuiz) {
+          const questionCount = randomInt(3, 5);
+
+          for (let q = 0; q < questionCount; q++) {
+            const contentType = teacher.subject.name === "Computer Science" && Math.random() > 0.5
+              ? "CODE"
+              : "AR";
+
+            const question = await prisma.quiz_questions.create({
+              data: {
+                id: uuid(),
+                lesson_id: lesson.id,
+                question: `Question ${q + 1}: What is true about "${lesson.title}" in ${teacher.subject.name}?`,
+                content_type: contentType,
+                code_language: contentType === "CODE" ? randomChoice(["PYTHON", "JAVASCRIPT"]) : null,
+                correct_index: 0, // set after options creation below
+                order: q + 1,
+              },
+            });
+
+            const optionCount = 4;
+            const correctIndex = randomInt(0, optionCount - 1);
+
+            for (let o = 0; o < optionCount; o++) {
+              await prisma.quiz_options.create({
+                data: {
+                  id: uuid(),
+                  question_id: question.id,
+                  text: o === correctIndex
+                    ? `Correct answer for question ${q + 1}`
+                    : `Distractor option ${o + 1}`,
+                  order: o + 1,
+                },
+              });
+            }
+
+            await prisma.quiz_questions.update({
+              where: { id: question.id },
+              data: { correct_index: correctIndex },
+            });
+          }
+        }
+      }
+
+      lessonsByCourse[course.id] = lessons;
+    }
+  }
+
+  // --- Enrollments -----------------------------------------------------------
+  console.log("Creating enrollments...");
+  const enrollments = []; // { studentId, courseId, courseObj }
+
+  for (const student of students) {
+    const enrollCount = randomInt(2, 5);
+    const chosenCourses = randomSubset(courses, enrollCount);
+
+    for (const course of chosenCourses) {
+      const lessons = lessonsByCourse[course.id];
+      const completedCount = randomInt(0, lessons.length);
+      const completedLessonIds = lessons.slice(0, completedCount).map((l) => l.id);
+      const progress = Math.round((completedCount / lessons.length) * 100);
+
+      const enrollment = await prisma.enrollment.create({
+        data: {
+          userId: student.id,
+          courseId: course.id,
+          progress,
+          completedLessonIds,
+        },
+      });
+
+      enrollments.push({ ...enrollment, course, student, lessons });
+    }
+  }
+
+  // --- Quiz attempts -----------------------------------------------------------
+  console.log("Creating quiz attempts...");
+  for (const enr of enrollments) {
+    const quizLessons = enr.lessons.filter((l) => l.hasQuiz && enr.completedLessonIds.includes(l.id));
+
+    for (const lesson of quizLessons) {
+      const questions = await prisma.quiz_questions.findMany({
+        where: { lesson_id: lesson.id },
+        include: { quiz_options: true },
+      });
+      if (questions.length === 0) continue;
+
+      const totalQuestions = questions.length;
+      const correctCount = randomInt(Math.ceil(totalQuestions * 0.3), totalQuestions);
+      const score = Math.round((correctCount / totalQuestions) * 100);
+
+      const answers = questions.map((q, idx) => ({
+        questionId: q.id,
+        selectedIndex: idx < correctCount ? q.correct_index : (q.correct_index + 1) % q.quiz_options.length,
+        isCorrect: idx < correctCount,
+      }));
+
+      await prisma.quizAttempt.create({
+        data: {
+          userId: enr.student.id,
+          lessonId: lesson.id,
+          score,
+          correctCount,
+          totalQuestions,
+          answers,
+          timedOut: Math.random() > 0.85,
+        },
+      });
+    }
+  }
+
+  // --- Teacher reviews ---------------------------------------------------------
+  console.log("Creating teacher reviews...");
+  const reviewedPairs = new Set();
+  for (const enr of enrollments) {
+    const key = `${enr.course.teacher.id}:${enr.student.id}`;
+    if (reviewedPairs.has(key)) continue;
+    if (Math.random() > 0.6) continue; // not every student reviews
+
+    reviewedPairs.add(key);
+    await prisma.teacherReview.create({
+      data: {
+        teacherId: enr.course.teacher.id,
+        studentId: enr.student.id,
+        rating: randomInt(3, 5),
+        comment: randomChoice([
+          "Explains concepts very clearly, highly recommend!",
+          "Great teacher, lessons are easy to follow.",
+          "Helped me improve my grades a lot.",
+          "Good course but could use more practice problems.",
+          null,
+        ]),
       },
     });
   }
 
-  // --- Algebra Foundations ---------------------------------------------
-  const algebra = await createCourse({
-    slug: "algebra-foundations",
-    title: "أساسيات الجبر",
-    description: "رحلة من الصفر في التعبيرات الجبرية والمعادلات والمتباينات، بفيديو مشروح لكل درس واختبار قصير في نهايته.",
-    subjectId: math.id,
-    teacherId: teacherProfilesById["ahmed-el-sayed"],
-    level: "PREP_1",
-    studentCount: 520,
-    rating: 4.9,
-  });
+  // --- Platform reviews ----------------------------------------------------
+  console.log("Creating platform reviews...");
+  const reviewedStudents = randomSubset(students, Math.ceil(students.length * 0.6));
+  for (const student of reviewedStudents) {
+    await prisma.platformReview.create({
+      data: {
+        studentId: student.id,
+        rating: randomInt(3, 5),
+        comment: randomChoice([
+          "Love the platform, very easy to use.",
+          "Great selection of courses and teachers.",
+          "The quizzes really help me retain the material.",
+          null,
+        ]),
+      },
+    });
+  }
 
-  const algebraLesson1 = await createLesson(algebra.id, {
-    title: "مقدمة في التعبيرات الجبرية",
-    order: 1,
-    duration: "18 دقيقة",
-    isFree: true,
-    description: "المتغيرات والحدود وكيفية قراءة التعبير الجبري.",
-    hasPdf: true,
-    pdfPages: 8,
-    quizDurationSeconds: 180,
-  });
-  await createQuestion(algebraLesson1.id, {
-    question: "ما هو المعامل في الحد 7x؟",
-    order: 1,
-    correctIndex: 1,
-    imageUrl: "https://placehold.co/400x200?text=7x",
-    options: [{ text: "x" }, { text: "7" }, { text: "7x" }, { text: "1" }],
-  });
-  await createQuestion(algebraLesson1.id, {
-    question: "بسّط: 3x + 5x",
-    order: 2,
-    correctIndex: 0,
-    options: [{ text: "8x" }, { text: "15x" }, { text: "8x^2" }, { text: "2x" }],
-  });
+  // --- Refresh tokens (a couple of sample sessions) --------------------------
+  console.log("Creating sample refresh tokens...");
+  for (const user of [...teacherProfiles.slice(0, 2).map((t) => t.user), ...students.slice(0, 3)]) {
+    await prisma.refreshToken.create({
+      data: {
+        userId: user.id,
+        tokenHash: crypto.createHash("sha256").update(uuid()).digest("hex"),
+        expiresAt: new Date(Date.now() + 1000 * 60 * 60 * 24 * 30), // +30 days
+      },
+    });
+  }
 
-  const algebraLesson2 = await createLesson(algebra.id, {
-    title: "حل المعادلات ذات الخطوة الواحدة",
-    order: 2,
-    duration: "22 دقيقة",
-    isFree: false,
-    description: "عزل المتغير باستخدام العمليات العكسية.",
-    hasPdf: true,
-    pdfPages: 10,
-    quizDurationSeconds: 150,
-  });
-  await createQuestion(algebraLesson2.id, {
-    question: "حل من أجل x: x + 9 = 15",
-    order: 1,
-    correctIndex: 0,
-    options: [{ text: "x = 6" }, { text: "x = 24" }, { text: "x = 9" }, { text: "x = 5" }],
-  });
+  // --- Recompute cache fields ------------------------------------------------
+  console.log("Recomputing cache fields...");
 
-  await createLesson(algebra.id, {
-    title: "حل المعادلات ذات الخطوتين",
-    order: 3,
-    duration: "25 دقيقة",
-    isFree: false,
-    description: "الجمع بين العمليات لحل المجهول.",
-    hasPdf: true,
-    pdfPages: 11,
-  });
+  // Course.studentCountCache from enrollment counts
+  for (const course of courses) {
+    const studentCount = await prisma.enrollment.count({ where: { courseId: course.id } });
+    await prisma.course.update({
+      where: { id: course.id },
+      data: {
+        studentCountCache: studentCount,
+        ratingCache: randomFloat(3.5, 5, 1),
+      },
+    });
+  }
 
-  // --- Geometry Essentials ----------------------------------------------
-  const geometry = await createCourse({
-    slug: "geometry-essentials",
-    title: "أساسيات الهندسة",
-    description: "الزوايا والمثلثات ومسائل المساحة موضحة بصريًا، مع اختبارات لترسيخ كل قاعدة.",
-    subjectId: math.id,
-    teacherId: teacherProfilesById["ahmed-el-sayed"],
-    level: "PREP_2",
-    studentCount: 410,
-    rating: 4.8,
-  });
+  // TeacherProfile caches from TeacherReview + distinct enrolled students
+  for (const teacher of teacherProfiles) {
+    const reviews = await prisma.teacherReview.findMany({ where: { teacherId: teacher.id } });
+    const reviewCount = reviews.length;
+    const avgRating = reviewCount > 0
+      ? reviews.reduce((sum, r) => sum + r.rating, 0) / reviewCount
+      : 0;
 
-  const geometryLesson1 = await createLesson(geometry.id, {
-    title: "الزوايا وأنواعها",
-    order: 1,
-    duration: "16 دقيقة",
-    isFree: true,
-    description: "الزوايا الحادة والمنفرجة والقائمة والمنعكسة.",
-    hasPdf: true,
-    pdfPages: 7,
-    quizDurationSeconds: 120,
-  });
-  await createQuestion(geometryLesson1.id, {
-    question: "أي الأشكال التالية دائرة؟",
-    order: 1,
-    correctIndex: 1,
-    options: [
-      { imageUrl: "https://placehold.co/160x160?text=Square" },
-      { imageUrl: "https://placehold.co/160x160?text=Circle" },
-      { imageUrl: "https://placehold.co/160x160?text=Triangle" },
-      { imageUrl: "https://placehold.co/160x160?text=Rectangle" },
-    ],
-  });
+    const teacherCourses = await prisma.course.findMany({ where: { teacherId: teacher.id } });
+    const courseIds = teacherCourses.map((c) => c.id);
+    const distinctStudents = await prisma.enrollment.findMany({
+      where: { courseId: { in: courseIds } },
+      select: { userId: true },
+      distinct: ["userId"],
+    });
 
-  await createLesson(geometry.id, {
-    title: "خصائص المثلثات",
-    order: 2,
-    duration: "20 دقيقة",
-    isFree: false,
-    description: "مجموع الزوايا وأنواع المثلثات ومتباينة المثلث.",
-    hasPdf: true,
-    pdfPages: 9,
-  });
+    await prisma.teacherProfile.update({
+      where: { id: teacher.id },
+      data: {
+        ratingCache: parseFloat(avgRating.toFixed(1)),
+        reviewCountCache: reviewCount,
+        studentCountCache: distinctStudents.length,
+      },
+    });
+  }
 
-  // --- Physics Fundamentals ----------------------------------------------
-  const physics = await createCourse({
-    slug: "physics-fundamentals",
-    title: "أساسيات الفيزياء",
-    description: "الحركة والقوة والطاقة موضحة من خلال أمثلة يومية واختبارات قصيرة لكل محطة.",
-    subjectId: science.id,
-    teacherId: teacherProfilesById["mona-fathy"],
-    level: "SEC_1",
-    studentCount: 380,
-    rating: 4.8,
-  });
-
-  const physicsLesson1 = await createLesson(physics.id, {
-    title: "الوحدات والقياس",
-    order: 1,
-    duration: "15 دقيقة",
-    isFree: true,
-    description: "الوحدات الدولية وكيفية التحويل بينها.",
-    hasPdf: true,
-    pdfPages: 6,
-    quizDurationSeconds: 150,
-  });
-  await createQuestion(physicsLesson1.id, {
-    question: "الوحدة الدولية للكتلة هي:",
-    order: 1,
-    correctIndex: 1,
-    options: [{ text: "جرام" }, { text: "كيلوجرام" }, { text: "رطل" }, { text: "نيوتن" }],
-  });
-
-  await createLesson(physics.id, {
-    title: "قوانين نيوتن للحركة",
-    order: 2,
-    duration: "26 دقيقة",
-    isFree: false,
-    description: "القوانين الثلاثة التي تفسر حركة الأجسام.",
-    hasPdf: true,
-    pdfPages: 12,
-  });
-
-  // --- Grammar in Practice ------------------------------------------------
-  const grammar = await createCourse({
-    slug: "grammar-in-practice",
-    title: "القواعد في التطبيق",
-    description: "الأزمنة وبناء الجملة والأخطاء الشائعة، مع اختبار بعد كل وحدة لترسيخها.",
-    subjectId: english.id,
-    teacherId: teacherProfilesById["sara-ibrahim"],
-    level: "PREP_3",
-    studentCount: 300,
-    rating: 4.7,
-  });
-
-  const grammarLesson1 = await createLesson(grammar.id, {
-    title: "زمن المضارع والماضي",
-    order: 1,
-    duration: "17 دقيقة",
-    isFree: true,
-    description: "تكوين واستخدام المضارع والماضي بشكل صحيح.",
-    hasPdf: true,
-    pdfPages: 7,
-    quizDurationSeconds: 90,
-  });
-  await createQuestion(grammarLesson1.id, {
-    question: "Choose the correct tense: She ___ to school yesterday.",
-    order: 1,
-    correctIndex: 2,
-    contentType: "EN",
-    options: [{ text: "go" }, { text: "goes" }, { text: "went" }, { text: "going" }],
-  });
-
-  // --- Intro to Programming ------------------------------------------------
-  const programming = await createCourse({
-    slug: "intro-to-programming",
-    title: "مقدمة في منطق البرمجة",
-    description: "المتغيرات والشروط والحلقات التكرارية عبر مسائل عملية صغيرة واختبارات.",
-    subjectId: computer.id,
-    teacherId: teacherProfilesById["hassan-aboul-fotouh"],
-    level: "SEC_1",
-    studentCount: 260,
-    rating: 4.9,
-  });
-
-  await createLesson(programming.id, {
-    title: "ما هي الخوارزمية؟",
-    order: 1,
-    duration: "14 دقيقة",
-    isFree: true,
-    description: "التفكير على شكل خطوات قبل كتابة أي كود.",
-    hasPdf: true,
-    pdfPages: 6,
-  });
-
-  const programmingLesson2 = await createLesson(programming.id, {
-    title: "المتغيرات وأنواع البيانات",
-    order: 2,
-    duration: "19 دقيقة",
-    isFree: true,
-    description: "تخزين البيانات وتسميتها داخل البرنامج.",
-    hasPdf: true,
-    pdfPages: 8,
-    quizDurationSeconds: 90,
-  });
-  await createQuestion(programmingLesson2.id, {
-    question: "أي كلمة مفتاحية تُستخدم للتحقق من شرط في معظم اللغات؟",
-    order: 1,
-    correctIndex: 1,
-    options: [{ text: "loop" }, { text: "if" }, { text: "print" }, { text: "var" }],
-  });
-
-  const programmingLesson3 = await createLesson(programming.id, {
-    title: "الحلقات التكرارية في التطبيق",
-    order: 3,
-    duration: "23 دقيقة",
-    isFree: false,
-    description: "تكرار الإجراءات باستخدام for و while.",
-    hasPdf: true,
-    pdfPages: 10,
-    quizDurationSeconds: 120,
-  });
-  await createQuestion(programmingLesson3.id, {
-    question: "for i in range(3):\n    print(i)\n\nWhat does this code print?",
-    order: 1,
-    correctIndex: 0,
-    contentType: "CODE",
-    codeLanguage: "PYTHON",
-    options: [{ text: "0 1 2" }, { text: "1 2 3" }, { text: "0 1 2 3" }, { text: "Error" }],
-  });
-  await createQuestion(programmingLesson3.id, {
-    question:
-      "let total = 0;\nfor (let i = 1; i <= 3; i++) {\n  total += i;\n}\nconsole.log(total);\n\nWhat is logged?",
-    order: 2,
-    correctIndex: 1,
-    contentType: "CODE",
-    codeLanguage: "JAVASCRIPT",
-    options: [{ text: "3" }, { text: "6" }, { text: "1" }, { text: "undefined" }],
-  });
-
-  console.log("  ✓ 5 courses with lessons and quizzes");
-
-  console.log("\n✅ Seed complete!");
-  console.log(`\nDemo accounts (password for all: "${DEMO_PASSWORD}"):`);
-  console.log("  Teacher: ahmed.elsayed@masar-academy.com");
-  console.log("  Teacher: mona.fathy@masar-academy.com");
-  console.log("  Teacher: sara.ibrahim@masar-academy.com");
-  console.log("  Teacher: hassan.aboulfotouh@masar-academy.com");
-  console.log("  Student: youssef.mostafa@example.com");
+  console.log("\nSeed complete:");
+  console.log(`  Subjects:        ${subjects.length}`);
+  console.log(`  Teachers:        ${teacherProfiles.length}`);
+  console.log(`  Students:        ${students.length}`);
+  console.log(`  Courses:         ${courses.length}`);
+  console.log(`  Enrollments:     ${enrollments.length}`);
+  console.log(`  Sample login (any seeded user): password = "Password123!"`);
 }
 
-seed()
-  .catch((error) => {
-    console.error("❌ Seed failed:", error);
-    process.exitCode = 1;
+main()
+  .catch((e) => {
+    console.error("Seed failed:", e);
   })
   .finally(async () => {
     await prisma.$disconnect();

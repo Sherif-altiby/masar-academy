@@ -78,7 +78,7 @@ export function SiteHeader() {
           <ThemeToggle />
 
           {status === "authenticated" && user ? (
-            <DropdownMenu>
+            <DropdownMenu dir="rtl">
               <DropdownMenuTrigger asChild>
                 <Button variant="ghost" size="icon" className="rounded-full">
                   <Avatar className="size-8">
