@@ -1,23 +1,29 @@
 model Lesson {
-  id                  String           @id @default(uuid())
-  courseId            String           @map("course_id")
+  id                  String        @id @default(uuid())
+
+  courseId            String        @map("course_id")
+  course              Course        @relation(fields: [courseId], references: [id], onDelete: Cascade)
+
   title               String
   order               Int
   duration            String
-  thumbnailUrl         String           @map("thumbnail_url")
-  isFree              Boolean          @default(false) @map("is_free")
+  isFree              Boolean       @default(false) @map("is_free")
   description         String
-  videoId             String           @map("video_id")
-  hasPdf              Boolean          @default(false) @map("has_pdf")
-  pdfUrl              String?          @map("pdf_url")
-  pdfPages            Int?             @map("pdf_pages")
-  hasQuiz             Boolean          @default(false) @map("has_quiz")
-  quizDurationSeconds Int?             @map("quiz_duration_seconds")
-  createdAt           DateTime         @default(now()) @map("created_at")
-  updatedAt           DateTime         @updatedAt @map("updated_at")
-  course              Course           @relation(fields: [courseId], references: [id], onDelete: Cascade)
+
+  videoId             String        @map("video_id")
+  thumbnailUrl        String        @map("thumbnail_url")
+
+  hasPdf              Boolean       @default(false) @map("has_pdf")
+  pdfUrl              String?       @map("pdf_url")
+  pdfPages            Int?          @map("pdf_pages")
+  hasQuiz             Boolean       @default(false) @map("has_quiz")
+  quizDurationSeconds Int?          @map("quiz_duration_seconds")
+
+  createdAt           DateTime      @default(now()) @map("created_at")
+  updatedAt           DateTime      @updatedAt @map("updated_at")
+
   quizAttempts        QuizAttempt[]
-  quiz_questions      quiz_questions[]
+  quizQuestions       QuizQuestion[]
 
   @@unique([courseId, order])
   @@map("lessons")

@@ -1,0 +1,23 @@
+model QuizQuestion {
+  id           String        @id @default(uuid())
+
+  lessonId     String        @map("lesson_id")
+  lesson       Lesson        @relation(fields: [lessonId], references: [id], onDelete: Cascade)
+
+  question     String
+  imageUrl     String?       @map("image_url")
+  contentType  ContentType   @default(AR) @map("content_type")
+
+  codeLanguage CodeLanguage? @map("code_language")
+
+  correctIndex Int           @map("correct_index")
+  order        Int
+
+  options      QuizOption[]
+
+  createdAt    DateTime      @default(now()) @map("created_at")
+  updatedAt    DateTime      @updatedAt @map("updated_at")
+
+  @@index([lessonId])
+  @@map("quiz_questions")
+}

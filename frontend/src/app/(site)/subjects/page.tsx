@@ -4,8 +4,8 @@ import * as React from "react";
 import { Search } from "lucide-react";
 
 import { Input } from "@/components/ui/input";
-import { Card } from "@/components/ui/card";
 import { SubjectCard } from "@/components/shared/subject-card";
+import { SubjectCardSkeleton } from "@/components/skeletons/subject-card-skeleton";
 import { useSubjects } from "@/hooks/use-subjects";
 import { Subject } from "@/types";
 
@@ -43,7 +43,7 @@ export default function SubjectsPage() {
       {isLoading && (
         <div className="mt-10 grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
           {Array.from({ length: 6 }).map((_, i) => (
-            <Card key={i} className="h-44 animate-pulse bg-secondary/40" />
+            <SubjectCardSkeleton key={i} />
           ))}
         </div>
       )}

@@ -151,7 +151,7 @@ export default function CoursePage() {
             </span>
           </div>
 
-          <Progress value={progress} className="mt-4 h-2" />
+          <Progress value={progress} className="mt-4 h-2"  />
 
           <div className="mt-2 flex justify-between text-xs text-muted-foreground">
             <span>{progress}% مكتمل</span>

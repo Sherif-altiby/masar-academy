@@ -12,7 +12,6 @@ import {
 } from "lucide-react";
 
 import { Input } from "@/components/ui/input";
-import { Card } from "@/components/ui/card";
 import {
   Select,
   SelectContent,
@@ -21,6 +20,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { TeacherCard } from "@/components/shared/teacher-card";
+import { TeacherCardSkeleton } from "@/components/skeletons/teacher-card-skeleton";
 import { useSubjects } from "@/hooks/use-subjects";
 import { useTeachers } from "@/hooks/use-teachers";
 import { cn } from "@/lib/utils";
@@ -291,32 +291,6 @@ function TeacherGridSkeleton() {
         <TeacherCardSkeleton key={index} />
       ))}
     </div>
-  );
-}
-
-function TeacherCardSkeleton() {
-  return (
-    <Card className="overflow-hidden rounded-2xl border-border/60">
-      <div className="h-44 animate-pulse bg-muted" />
-
-      <div className="space-y-4 p-5">
-        <div className="flex items-center gap-3">
-          <div className="size-10 animate-pulse rounded-full bg-muted" />
-
-          <div className="flex-1 space-y-2">
-            <div className="h-4 w-2/3 animate-pulse rounded bg-muted" />
-            <div className="h-3 w-1/3 animate-pulse rounded bg-muted" />
-          </div>
-        </div>
-
-        <div className="h-4 w-full animate-pulse rounded bg-muted" />
-        <div className="h-4 w-4/5 animate-pulse rounded bg-muted" />
-
-        <div className="border-t pt-4">
-          <div className="h-9 w-full animate-pulse rounded-lg bg-muted" />
-        </div>
-      </div>
-    </Card>
   );
 }
 

@@ -7,7 +7,6 @@ import {
   BookOpen,
   CheckCircle2,
   GraduationCap,
-  Loader2,
   MessageSquare,
   Users,
 } from "lucide-react";
@@ -31,25 +30,14 @@ import { StarRating } from "@/components/shared/star-rating";
 import { RateTeacherDialog } from "@/components/shared/rate-teacher-dialog";
 import { useTeacher } from "@/hooks/use-teachers";
 import { cn } from "@/lib/utils";
+import { TeacherProfileSkeleton } from "@/components/skeletons/teacher-profile-skeleton";
 
 export default function TeacherProfilePage() {
   const params = useParams<{ slug: string }>();
   const { data: teacher, isLoading, isError } = useTeacher(params.slug);
 
   if (isLoading) {
-    return (
-      <div className="flex min-h-[65vh] items-center justify-center">
-        <div className="flex flex-col items-center gap-3">
-          <div className="flex size-12 items-center justify-center rounded-xl bg-secondary">
-            <Loader2 className="size-5 animate-spin text-primary" />
-          </div>
-
-          <p className="text-sm text-muted-foreground">
-            جاري تحميل الملف الشخصي...
-          </p>
-        </div>
-      </div>
-    );
+    return <TeacherProfileSkeleton />;
   }
 
   if (isError || !teacher) {
@@ -471,4 +459,6 @@ function SectionHeading({
     </div>
   );
 }
- 
+
+
+

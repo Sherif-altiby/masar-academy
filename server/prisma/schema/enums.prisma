@@ -35,3 +35,14 @@ enum Grade {
   BAC_2_BUSINESS
   BAC_2_ARTS
 }
+
+enum Level {
+  PRIMARY_5
+  PRIMARY_6
+  PREP_1
+  PREP_2
+  PREP_3
+  SEC_1
+  SEC_2
+  SEC_3
+}

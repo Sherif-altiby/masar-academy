@@ -64,7 +64,7 @@ export function RateTeacherDialog({
   if (isAuthenticated && !isStudent) return null;
 
   return (
-    <Dialog open={open} onOpenChange={setOpen}>
+    <Dialog open={open} onOpenChange={setOpen}  >
       <DialogTrigger asChild>
         <Button variant="outline" onClick={handleTriggerClick}>
           <Star /> قيّم هذا المدرّس
@@ -83,7 +83,7 @@ export function RateTeacherDialog({
             <Label>تقييمك</Label>
             <StarRating value={rating} onChange={setRating} size={26} />
           </div>
-          <div className="space-y-2">
+          <div className="space-y-3">
             <Label htmlFor="comment">تعليق (اختياري)</Label>
             <Textarea
               id="comment"

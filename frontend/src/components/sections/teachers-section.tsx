@@ -4,8 +4,8 @@ import Link from "next/link";
 import { ArrowLeft } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
-import { Card } from "@/components/ui/card";
 import { TeacherCard } from "@/components/shared/teacher-card";
+import { TeacherCardSkeleton } from "@/components/skeletons/teacher-card-skeleton";
 import { useTeachers } from "@/hooks/use-teachers";
 
 export function TeachersSection() {
@@ -31,7 +31,7 @@ export function TeachersSection() {
         {isLoading && (
           <div className="mt-10 grid gap-5 sm:grid-cols-2 lg:grid-cols-4">
             {Array.from({ length: 4 }).map((_, i) => (
-              <Card key={i} className="h-64 animate-pulse bg-secondary/40" />
+              <TeacherCardSkeleton key={i} />
             ))}
           </div>
         )}

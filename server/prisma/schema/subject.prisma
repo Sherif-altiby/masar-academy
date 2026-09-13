@@ -1,9 +1,9 @@
 model Subject {
-  id          String           @id @default(uuid())
+  id          String            @id @default(uuid())
   name        String
   icon        String
   description String
-  imageUrl   String
+  imageUrl    String            @map("image_url")
   color       String
   courses     Course[]
   teachers    TeacherProfile[]

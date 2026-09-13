@@ -33,11 +33,11 @@ export function SubjectCard({ subject }: { subject: Subject }) {
           "bg-background shadow-sm",
           "transition-all duration-300 ease-out",
           "hover:-translate-y-1.5 hover:border-primary/20 hover:shadow-xl",
-          "focus-within:ring-2 focus-within:ring-primary/30"
+          "focus-within:ring-2 focus-within:ring-primary/30 pt-0"
         )}
       >
         {/* Image */}
-        <div className="relative h-40 overflow-hidden">
+        <div className="relative h-44 overflow-hidden">
           {hasImage ? (
             <Image
               src={subject.imageUrl}

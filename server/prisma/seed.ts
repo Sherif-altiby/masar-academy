@@ -1,23 +1,23 @@
 /**
- * Prisma seed script (TypeScript)
+ * سكريبت تعبئة بيانات Prisma (TypeScript)
  * -------------------------------
- * Seeds: 5 Subjects, 10 Teachers (User + TeacherProfile), 15 Students,
- * ~20 Courses, Lessons per course, quiz_questions/quiz_options for some
- * lessons, Enrollments, QuizAttempts, TeacherReviews, PlatformReviews,
- * and a couple of RefreshTokens.
+ * يقوم بتعبئة: 5 مواد دراسية، 10 معلمين (User + TeacherProfile)، 15 طالبًا،
+ * حوالي 20 دورة تدريبية، دروسًا لكل دورة، أسئلة/خيارات اختبارات لبعض
+ * الدروس، تسجيلات (Enrollments)، محاولات اختبارات (QuizAttempts)،
+ * تقييمات المعلمين، تقييمات المنصة، وعدد قليل من (RefreshTokens).
  *
- * Usage (Prisma ORM 7 requires a driver adapter — this uses Postgres):
+ * طريقة الاستخدام (Prisma ORM 7 يتطلب driver adapter — هذا السكريبت يستخدم Postgres):
  *   npm install @prisma/client @prisma/adapter-pg bcryptjs dotenv
  *   npm install -D typescript tsx @types/node @types/bcryptjs
  *   npx tsx prisma/seed.ts
  *
- * Make sure DATABASE_URL is set in your .env file — this script loads it
- * itself via `dotenv/config` since tsx/node don't auto-load .env like the
- * Prisma CLI does.
+ * تأكد من ضبط DATABASE_URL في ملف .env الخاص بك — هذا السكريبت يقوم بتحميله
+ * بنفسه عبر `dotenv/config` لأن tsx/node لا يحمّلان .env تلقائيًا كما تفعل
+ * واجهة سطر أوامر Prisma.
  *
- * Or wire it up as the official Prisma seed command in package.json:
+ * أو قم بربطه كأمر seed رسمي في package.json:
  *   "prisma": { "seed": "tsx prisma/seed.ts" }
- * then run: npx prisma db seed
+ * ثم شغّل: npx prisma db seed
  */
 
 import "dotenv/config";
@@ -38,15 +38,15 @@ import { PrismaPg } from "@prisma/adapter-pg";
 import bcrypt from "bcryptjs";
 import crypto from "crypto";
 
-// Prisma ORM 7 removed the built-in query engine — a driver adapter is now
-// required to connect to the database. Swap PrismaPg for the adapter that
-// matches your datasource provider if it isn't PostgreSQL (e.g.
-// @prisma/adapter-mysql, @prisma/adapter-libsql, @prisma/adapter-planetscale).
+// Prisma ORM 7 أزالت محرك الاستعلامات المدمج — أصبح الآن مطلوبًا استخدام
+// driver adapter للاتصال بقاعدة البيانات. استبدل PrismaPg بالـ adapter
+// المناسب لمزود مصدر البيانات لديك إذا لم يكن PostgreSQL (مثل
+// @prisma/adapter-mysql، @prisma/adapter-libsql، @prisma/adapter-planetscale).
 const adapter = new PrismaPg({ connectionString: process.env.DATABASE_URL });
 const prisma = new PrismaClient({ adapter });
 
 // ---------------------------------------------------------------------------
-// Helpers
+// دوال مساعدة
 // ---------------------------------------------------------------------------
 
 const uuid = (): string => crypto.randomUUID();
@@ -76,25 +76,20 @@ function slugify(str: string): string {
     .replace(/(^-|-$)/g, "");
 }
 
-// Deterministic placeholder cover image per course (no API key required).
-// The slug is used as the picsum.photos seed, so re-running the script with
-// the same slug always yields the same image — swap this out for real
-// uploaded/CDN URLs whenever you have actual course artwork.
+// صورة غلاف افتراضية لكل دورة (بدون الحاجة لمفتاح API).
+// يُستخدم الـ slug كـ seed لموقع picsum.photos، لذا فإن إعادة تشغيل
+// السكريبت بنفس الـ slug يعطي دائمًا نفس الصورة — استبدل هذا برابط
+// CDN حقيقي عندما تتوفر صور دورات فعلية.
 function courseImageUrl(slug: string): string {
   return `https://picsum.photos/seed/${encodeURIComponent(slug)}/800/450`;
 }
 
-// Same idea, sized for a subject banner/cover image.
-function subjectImageUrl(name: string): string {
-  return `https://picsum.photos/seed/${encodeURIComponent(slugify(name))}/600/400`;
-}
-
-// Same idea, sized for a lesson video thumbnail.
+// نفس الفكرة، بمقاس مناسب لصورة مصغّرة لفيديو الدرس.
 function lessonThumbnailUrl(seed: string): string {
   return `https://picsum.photos/seed/${encodeURIComponent(seed)}/640/360`;
 }
 
-// Deterministic placeholder avatar (person photo) for users/teachers.
+// صورة رمزية افتراضية (صورة شخص) للمستخدمين/المعلمين.
 function avatarUrl(seed: string): string {
   return `https://i.pravatar.cc/300?u=${encodeURIComponent(seed)}`;
 }
@@ -109,7 +104,7 @@ function initials(fullName: string): string {
 }
 
 // ---------------------------------------------------------------------------
-// Static reference data
+// بيانات مرجعية ثابتة
 // ---------------------------------------------------------------------------
 
 interface SubjectSeed {
@@ -117,42 +112,53 @@ interface SubjectSeed {
   icon: string;
   color: string;
   description: string;
+  // رابط صورة حقيقي محدد يدويًا لكل مادة (بدلاً من صورة عشوائية من picsum.photos)
+  imageUrl: string;
 }
 
 const SUBJECTS_DATA: SubjectSeed[] = [
   {
-    name: "Mathematics",
+    name: "الرياضيات",
     icon: "calculator",
     color: "#3B82F6",
     description:
-      "Algebra, geometry, calculus and problem-solving fundamentals for every stage.",
+      "الجبر والهندسة والتفاضل والتكامل وأساسيات حل المسائل لكل المراحل الدراسية.",
+    imageUrl:
+      "https://commons.wikimedia.org/wiki/Special:FilePath/Mathematics_concept_collage.jpg",
   },
   {
-    name: "Physics",
+    name: "الفيزياء",
     icon: "atom",
     color: "#8B5CF6",
     description:
-      "Mechanics, electricity, waves and modern physics explained with real experiments.",
+      "الميكانيكا والكهرباء والموجات والفيزياء الحديثة موضّحة بتجارب حقيقية.",
+    imageUrl:
+      "https://commons.wikimedia.org/wiki/Special:FilePath/Physics-collage-01.jpg",
   },
   {
-    name: "Chemistry",
+    name: "الكيمياء",
     icon: "flask",
     color: "#10B981",
     description:
-      "Organic, inorganic and physical chemistry with lab-based intuition.",
+      "الكيمياء العضوية وغير العضوية والفيزيائية بفهم قائم على التجارب المعملية.",
+    imageUrl:
+      "https://commons.wikimedia.org/wiki/Special:FilePath/Chemistry_Laboratory_-_Bench.jpg",
   },
   {
-    name: "Biology",
+    name: "الأحياء",
     icon: "dna",
     color: "#F59E0B",
-    description: "Cell biology, genetics, physiology and ecology made visual.",
+    description: "بيولوجيا الخلية والوراثة وعلم وظائف الأعضاء والبيئة بأسلوب مرئي.",
+    imageUrl: "https://commons.wikimedia.org/wiki/Special:FilePath/Biology.jpg",
   },
   {
-    name: "Computer Science",
+    name: "علوم الحاسب",
     icon: "code",
     color: "#EF4444",
     description:
-      "Programming fundamentals, algorithms and computational thinking.",
+      "أساسيات البرمجة والخوارزميات والتفكير الحاسوبي.",
+    imageUrl:
+      "https://commons.wikimedia.org/wiki/Special:FilePath/Programming_code.jpg",
   },
 ];
 
@@ -165,95 +171,95 @@ interface TeacherSeed {
   about: string;
 }
 
-// 2 teachers per subject (10 total), index into SUBJECTS_DATA
+// معلمان لكل مادة (10 إجمالًا)، رقم الفهرس يشير إلى SUBJECTS_DATA
 const TEACHERS_DATA: TeacherSeed[] = [
   {
     fullName: "Ahmed El-Sayed",
     subjectIndex: 0,
-    title: "Senior Mathematics Instructor",
+    title: "مدرّس رياضيات أول",
     yearsExperience: 12,
-    credentials: ["Cairo University - B.Sc. Mathematics", "Certified STEM Trainer"],
+    credentials: ["جامعة القاهرة - بكالوريوس رياضيات", "مدرّب معتمد في مواد STEM"],
     about:
-      "Ahmed has spent over a decade helping students master mathematics through simplified, exam-focused techniques.",
+      "قضى أحمد أكثر من عقد في مساعدة الطلاب على إتقان الرياضيات من خلال أساليب مبسطة ومركّزة على الامتحانات.",
   },
   {
     fullName: "Mona Fathy",
     subjectIndex: 0,
-    title: "Mathematics Curriculum Lead",
+    title: "قائدة منهج الرياضيات",
     yearsExperience: 9,
-    credentials: ["Ain Shams University - M.Sc. Applied Mathematics"],
+    credentials: ["جامعة عين شمس - ماجستير رياضيات تطبيقية"],
     about:
-      "Mona specializes in breaking down advanced calculus and algebra topics into digestible lessons.",
+      "تتخصص منى في تبسيط مواضيع التفاضل والتكامل والجبر المتقدمة إلى دروس سهلة الفهم.",
   },
   {
     fullName: "Karim Abdel Rahman",
     subjectIndex: 1,
-    title: "Physics Instructor",
+    title: "مدرّس فيزياء",
     yearsExperience: 10,
-    credentials: ["Alexandria University - B.Sc. Physics"],
+    credentials: ["جامعة الإسكندرية - بكالوريوس فيزياء"],
     about:
-      "Karim brings physics to life through hands-on demonstrations and real-world problem sets.",
+      "يقرّب كريم الفيزياء من الطلاب من خلال العروض العملية ومجموعات مسائل من واقع الحياة.",
   },
   {
     fullName: "Nourhan Adel",
     subjectIndex: 1,
-    title: "Physics & Applied Sciences Tutor",
+    title: "مدرّسة فيزياء وعلوم تطبيقية",
     yearsExperience: 7,
-    credentials: ["Mansoura University - B.Sc. Physics", "IB Physics Certified"],
+    credentials: ["جامعة المنصورة - بكالوريوس فيزياء", "معتمدة في فيزياء البكالوريا الدولية"],
     about:
-      "Nourhan focuses on conceptual understanding before formula memorization.",
+      "تركّز نورهان على الفهم المفاهيمي قبل حفظ القوانين.",
   },
   {
     fullName: "Youssef Hassan",
     subjectIndex: 2,
-    title: "Chemistry Instructor",
+    title: "مدرّس كيمياء",
     yearsExperience: 14,
-    credentials: ["Cairo University - M.Sc. Chemistry"],
+    credentials: ["جامعة القاهرة - ماجستير كيمياء"],
     about:
-      "Youssef has taught chemistry to thousands of secondary and baccalaureate students.",
+      "درّس يوسف الكيمياء لآلاف الطلاب في المرحلة الثانوية والبكالوريا.",
   },
   {
     fullName: "Salma Ibrahim",
     subjectIndex: 2,
-    title: "Organic Chemistry Specialist",
+    title: "متخصصة في الكيمياء العضوية",
     yearsExperience: 8,
-    credentials: ["Helwan University - B.Sc. Chemistry"],
-    about: "Salma makes organic chemistry mechanisms intuitive with visual reaction maps.",
+    credentials: ["جامعة حلوان - بكالوريوس كيمياء"],
+    about: "تجعل سلمى آليات الكيمياء العضوية سهلة الفهم من خلال خرائط تفاعل مرئية.",
   },
   {
     fullName: "Omar Khaled",
     subjectIndex: 3,
-    title: "Biology Instructor",
+    title: "مدرّس أحياء",
     yearsExperience: 11,
-    credentials: ["Cairo University - B.Sc. Biology"],
+    credentials: ["جامعة القاهرة - بكالوريوس أحياء"],
     about:
-      "Omar's lessons blend molecular biology with clear diagrams and memory techniques.",
+      "تمزج دروس عمر بين البيولوجيا الجزيئية والرسوم التوضيحية الواضحة وتقنيات الحفظ.",
   },
   {
     fullName: "Heba Mostafa",
     subjectIndex: 3,
-    title: "Biology & Genetics Tutor",
+    title: "مدرّسة أحياء ووراثة",
     yearsExperience: 6,
-    credentials: ["Zagazig University - B.Sc. Biology"],
-    about: "Heba is passionate about genetics and human physiology education.",
+    credentials: ["جامعة الزقازيق - بكالوريوس أحياء"],
+    about: "تُعنى هبة بتدريس علم الوراثة وفسيولوجيا الإنسان بشغف.",
   },
   {
     fullName: "Tarek Nabil",
     subjectIndex: 4,
-    title: "Computer Science Instructor",
+    title: "مدرّس علوم حاسب",
     yearsExperience: 9,
-    credentials: ["German University in Cairo - B.Sc. Computer Science"],
+    credentials: ["الجامعة الألمانية بالقاهرة - بكالوريوس علوم حاسب"],
     about:
-      "Tarek teaches programming fundamentals using Python and JavaScript with project-based learning.",
+      "يدرّس طارق أساسيات البرمجة باستخدام Python وJavaScript عبر التعلم القائم على المشاريع.",
   },
   {
     fullName: "Dina Samir",
     subjectIndex: 4,
-    title: "Software & Algorithms Tutor",
+    title: "مدرّسة برمجيات وخوارزميات",
     yearsExperience: 5,
-    credentials: ["Cairo University - B.Sc. Computer Engineering"],
+    credentials: ["جامعة القاهرة - بكالوريوس هندسة حاسبات"],
     about:
-      "Dina focuses on algorithmic thinking and clean coding practices for beginners.",
+      "تركّز دينا على التفكير الخوارزمي وممارسات البرمجة النظيفة للمبتدئين.",
   },
 ];
 
@@ -290,26 +296,26 @@ const COURSE_LEVELS: Level[] = [
 ];
 
 const COURSE_TITLE_TEMPLATES: string[] = [
-  "Complete {subject} Foundations",
-  "{subject} Mastery Course",
-  "{subject} for Beginners",
-  "Advanced {subject} Bootcamp",
-  "{subject} Exam Preparation",
-  "{subject} Deep Dive",
+  "أساسيات {subject} الكاملة",
+  "دورة إتقان {subject}",
+  "{subject} للمبتدئين",
+  "معسكر {subject} المتقدم",
+  "التحضير لامتحان {subject}",
+  "التعمق في {subject}",
 ];
 
 const LESSON_TITLES: string[] = [
-  "Introduction & Overview",
-  "Core Concepts Explained",
-  "Worked Examples",
-  "Common Mistakes to Avoid",
-  "Practice Problems",
-  "Advanced Applications",
-  "Exam-Style Questions",
-  "Chapter Summary & Review",
+  "مقدمة ونظرة عامة",
+  "شرح المفاهيم الأساسية",
+  "أمثلة محلولة",
+  "أخطاء شائعة يجب تجنبها",
+  "مسائل تدريبية",
+  "تطبيقات متقدمة",
+  "أسئلة على نمط الامتحان",
+  "ملخص ومراجعة الفصل",
 ];
 
-// Local helper types for objects we build up as we go
+// أنواع مساعدة محلية للكائنات التي نبنيها أثناء التنفيذ
 type TeacherWithRelations = TeacherProfile & { subject: Subject; user: User };
 type CourseWithTeacher = {
   id: string;
@@ -323,12 +329,12 @@ type EnrollmentWithRelations = Enrollment & {
 };
 
 // ---------------------------------------------------------------------------
-// Main seed logic
+// منطق التعبئة الرئيسي
 // ---------------------------------------------------------------------------
 
 async function main(): Promise<void> {
   console.log("Cleaning existing data...");
-  // Delete in dependency-safe order
+  // الحذف بترتيب آمن حسب الاعتمادية بين الجداول
   await prisma.quiz_options.deleteMany();
   await prisma.quiz_questions.deleteMany();
   await prisma.quizAttempt.deleteMany();
@@ -344,17 +350,17 @@ async function main(): Promise<void> {
 
   const passwordHash = await bcrypt.hash("Password123!", 10);
 
-  // --- Subjects ------------------------------------------------------------
+  // --- المواد الدراسية ------------------------------------------------------------
   console.log("Creating subjects...");
   const subjects: Subject[] = [];
   for (const s of SUBJECTS_DATA) {
     const subject = await prisma.subject.create({
-      data: { ...s, imageUrl: subjectImageUrl(s.name) },
+      data: s, // s.imageUrl already contains the real image link
     });
     subjects.push(subject);
   }
 
-  // --- Teachers (User + TeacherProfile) ------------------------------------
+  // --- المعلمون (User + TeacherProfile) ------------------------------------
   console.log("Creating teachers...");
   const teacherProfiles: TeacherWithRelations[] = [];
   for (const t of TEACHERS_DATA) {
@@ -383,14 +389,14 @@ async function main(): Promise<void> {
         about: t.about,
         avatarUrl: avatarUrl(`teacher-${slugify(t.fullName)}`),
         credentials: t.credentials,
-        // caches recomputed at the end of the script
+        // حقول الـ cache يتم إعادة حسابها في نهاية السكريبت
       },
     });
 
     teacherProfiles.push({ ...teacherProfile, subject, user });
   }
 
-  // --- Students --------------------------------------------------------------
+  // --- الطلاب --------------------------------------------------------------
   console.log("Creating students...");
   const students: User[] = [];
   for (const fullName of STUDENT_NAMES) {
@@ -419,7 +425,7 @@ async function main(): Promise<void> {
     students.push(user);
   }
 
-  // --- Courses + Lessons + Quizzes -----------------------------------------
+  // --- الدورات + الدروس + الاختبارات -----------------------------------------
   console.log("Creating courses, lessons and quizzes...");
   const courses: CourseWithTeacher[] = [];
   const lessonsByCourse: Record<string, Lesson[]> = {};
@@ -440,7 +446,7 @@ async function main(): Promise<void> {
         data: {
           slug: courseSlug,
           title: uniqueTitle,
-          description: `A comprehensive ${teacher.subject.name} course covering everything students need, taught by ${teacher.user.fullName}.`,
+          description: `دورة شاملة في ${teacher.subject.name} تغطي كل ما يحتاجه الطلاب، يقدّمها ${teacher.user.fullName}.`,
           imageUrl: courseImageUrl(courseSlug),
           subjectId: teacher.subject.id,
           teacherId: teacher.id,
@@ -452,7 +458,7 @@ async function main(): Promise<void> {
       const courseWithTeacher: CourseWithTeacher = { ...course, teacher };
       courses.push(courseWithTeacher);
 
-      // Lessons
+      // الدروس
       const lessonCount = randomInt(4, 8);
       const shuffledTitles = randomSubset(LESSON_TITLES, lessonCount);
       const lessons: Lesson[] = [];
@@ -464,13 +470,13 @@ async function main(): Promise<void> {
         const lesson = await prisma.lesson.create({
           data: {
             courseId: course.id,
-            title: shuffledTitles[l] || `Lesson ${l + 1}`,
+            title: shuffledTitles[l] || `الدرس ${l + 1}`,
             order: l + 1,
             duration: `${randomInt(5, 25)}:${String(randomInt(0, 59)).padStart(2, "0")}`,
-            isFree: l === 0, // first lesson free as a preview
-            description: `In this lesson, students explore ${(
-              shuffledTitles[l] || "the topic"
-            ).toLowerCase()} within ${teacher.subject.name}.`,
+            isFree: l === 0, // الدرس الأول مجاني كمعاينة
+            description: `في هذا الدرس، يستكشف الطلاب ${(
+              shuffledTitles[l] || "الموضوع"
+            )} ضمن مادة ${teacher.subject.name}.`,
             videoId: `vid_${uuid().slice(0, 12)}`,
             thumbnailUrl: lessonThumbnailUrl(`${course.slug}-lesson-${l + 1}`),
             hasPdf,
@@ -483,13 +489,13 @@ async function main(): Promise<void> {
 
         lessons.push(lesson);
 
-        // Quiz questions + options for lessons that have a quiz
+        // أسئلة وخيارات الاختبار للدروس التي تحتوي على اختبار
         if (hasQuiz) {
           const questionCount = randomInt(3, 5);
 
           for (let q = 0; q < questionCount; q++) {
             const contentType: ContentType =
-              teacher.subject.name === "Computer Science" && Math.random() > 0.5
+              teacher.subject.name === "علوم الحاسب" && Math.random() > 0.5
                 ? "CODE"
                 : "AR";
 
@@ -497,13 +503,13 @@ async function main(): Promise<void> {
               data: {
                 id: uuid(),
                 lesson_id: lesson.id,
-                question: `Question ${q + 1}: What is true about "${lesson.title}" in ${teacher.subject.name}?`,
+                question: `السؤال ${q + 1}: ما الصحيح بخصوص "${lesson.title}" في مادة ${teacher.subject.name}؟`,
                 content_type: contentType,
                 code_language:
                   contentType === "CODE"
                     ? randomChoice<CodeLanguage>(["PYTHON", "JAVASCRIPT"])
                     : null,
-                correct_index: 0, // set after options creation below
+                correct_index: 0, // يُحدَّد بعد إنشاء الخيارات أدناه
                 order: q + 1,
               },
             });
@@ -518,8 +524,8 @@ async function main(): Promise<void> {
                   question_id: question.id,
                   text:
                     o === correctIndex
-                      ? `Correct answer for question ${q + 1}`
-                      : `Distractor option ${o + 1}`,
+                      ? `الإجابة الصحيحة للسؤال ${q + 1}`
+                      : `خيار غير صحيح ${o + 1}`,
                   order: o + 1,
                 },
               });
@@ -537,7 +543,7 @@ async function main(): Promise<void> {
     }
   }
 
-  // --- Enrollments -----------------------------------------------------------
+  // --- التسجيلات -----------------------------------------------------------
   console.log("Creating enrollments...");
   const enrollments: EnrollmentWithRelations[] = [];
 
@@ -564,7 +570,7 @@ async function main(): Promise<void> {
     }
   }
 
-  // --- Quiz attempts -----------------------------------------------------------
+  // --- محاولات الاختبارات -----------------------------------------------------------
   console.log("Creating quiz attempts...");
   for (const enr of enrollments) {
     const quizLessons = enr.lessons.filter(
@@ -605,13 +611,13 @@ async function main(): Promise<void> {
     }
   }
 
-  // --- Teacher reviews ---------------------------------------------------------
+  // --- تقييمات المعلمين ---------------------------------------------------------
   console.log("Creating teacher reviews...");
   const reviewedPairs = new Set<string>();
   for (const enr of enrollments) {
     const key = `${enr.course.teacher.id}:${enr.student.id}`;
     if (reviewedPairs.has(key)) continue;
-    if (Math.random() > 0.6) continue; // not every student reviews
+    if (Math.random() > 0.6) continue; // ليس كل طالب يكتب تقييمًا
 
     reviewedPairs.add(key);
     await prisma.teacherReview.create({
@@ -620,17 +626,17 @@ async function main(): Promise<void> {
         studentId: enr.student.id,
         rating: randomInt(3, 5),
         comment: randomChoice<string | null>([
-          "Explains concepts very clearly, highly recommend!",
-          "Great teacher, lessons are easy to follow.",
-          "Helped me improve my grades a lot.",
-          "Good course but could use more practice problems.",
+          "يشرح المفاهيم بوضوح شديد، أنصح به بشدة!",
+          "مدرّس رائع، والدروس سهلة المتابعة.",
+          "ساعدني كثيرًا في تحسين درجاتي.",
+          "دورة جيدة لكنها تحتاج إلى مزيد من المسائل التدريبية.",
           null,
         ]),
       },
     });
   }
 
-  // --- Platform reviews ----------------------------------------------------
+  // --- تقييمات المنصة ----------------------------------------------------
   console.log("Creating platform reviews...");
   const reviewedStudents = randomSubset(students, Math.ceil(students.length * 0.6));
   for (const student of reviewedStudents) {
@@ -639,16 +645,16 @@ async function main(): Promise<void> {
         studentId: student.id,
         rating: randomInt(3, 5),
         comment: randomChoice<string | null>([
-          "Love the platform, very easy to use.",
-          "Great selection of courses and teachers.",
-          "The quizzes really help me retain the material.",
+          "أحب المنصة، سهلة الاستخدام جدًا.",
+          "تشكيلة رائعة من الدورات والمعلمين.",
+          "الاختبارات تساعدني حقًا في ترسيخ المادة.",
           null,
         ]),
       },
     });
   }
 
-  // --- Refresh tokens (a couple of sample sessions) --------------------------
+  // --- التوكنات (جلسات نموذجية) --------------------------
   console.log("Creating sample refresh tokens...");
   const sampleUsers: User[] = [
     ...teacherProfiles.slice(0, 2).map((t) => t.user),
@@ -660,15 +666,15 @@ async function main(): Promise<void> {
       data: {
         userId: user.id,
         tokenHash,
-        expiresAt: new Date(Date.now() + 1000 * 60 * 60 * 24 * 30), // +30 days
+        expiresAt: new Date(Date.now() + 1000 * 60 * 60 * 24 * 30), // +30 يومًا
       },
     });
   }
 
-  // --- Recompute cache fields ------------------------------------------------
+  // --- إعادة حساب حقول الـ cache ------------------------------------------------
   console.log("Recomputing cache fields...");
 
-  // Course.studentCountCache from enrollment counts
+  // Course.studentCountCache من عدد التسجيلات
   for (const course of courses) {
     const studentCount = await prisma.enrollment.count({ where: { courseId: course.id } });
     await prisma.course.update({
@@ -680,7 +686,7 @@ async function main(): Promise<void> {
     });
   }
 
-  // TeacherProfile caches from TeacherReview + distinct enrolled students
+  // حقول cache الخاصة بـ TeacherProfile من TeacherReview وعدد الطلاب الفريدين المسجّلين
   for (const teacher of teacherProfiles) {
     const reviews = await prisma.teacherReview.findMany({ where: { teacherId: teacher.id } });
     const reviewCount = reviews.length;
