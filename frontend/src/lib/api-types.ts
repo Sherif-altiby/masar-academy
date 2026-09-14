@@ -48,6 +48,7 @@ export interface ApiTeacherDetail extends ApiTeacherSummary {
     slug: string;
     title: string;
     description: string;
+    isFree: boolean;
     lessonCount: number;
     studentCount: number;
     rating: number;
@@ -70,6 +71,7 @@ export interface ApiCourseSummary {
   teacherId: string;
   level: string;
   price: number;
+  isFree: boolean;
   rating: number;
   studentCount: number;
   lessonCount: number;
@@ -87,12 +89,23 @@ export interface ApiLessonSummary {
   pdfPages: number | null;
   hasQuiz: boolean;
   quizDurationSeconds: number | null;
+  isCompleted: boolean;
 }
 
 export interface ApiCourseDetail extends ApiCourseSummary {
   teacherName: string;
   teacherSlug: string;
+  isEnrolled: boolean;
+  progress: number;
   lessons: ApiLessonSummary[];
+}
+
+export interface ApiCourseEnrollmentResponse {
+  courseId: string;
+  enrollmentId: string;
+  isEnrolled: true;
+  progress: number;
+  completedLessonIds: string[];
 }
 
 export interface ApiLessonDetail extends ApiLessonSummary {
@@ -143,6 +156,13 @@ export interface ApiQuizAttemptResponse {
   correctCount: number;
   totalQuestions: number;
   results: ApiQuizAttemptResult[];
+}
+
+export interface ApiLessonCompletionResponse {
+  lessonId: string;
+  isCompleted: true;
+  progress: number;
+  nextLesson: { id: string; order: number } | null;
 }
 
 export interface ApiTeacherProfile {

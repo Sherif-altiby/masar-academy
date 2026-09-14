@@ -68,6 +68,7 @@ export const teachersService = {
         slug: course.slug,
         title: course.title,
         description: course.description,
+        isFree: course.isFree,
         lessonCount: course._count.lessons,
         studentCount: course.studentCountCache,
         rating: course.ratingCache,

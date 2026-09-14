@@ -8,7 +8,6 @@ import {
   CheckCircle2,
   FileText,
   HelpCircle,
-  Lock,
   PlayCircle,
   Users,
 } from "lucide-react";
@@ -19,12 +18,17 @@ import { Card } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
 import { Skeleton } from "@/components/ui/skeleton";
 import { StarRating } from "@/components/shared/star-rating";
-import { useCourse } from "@/hooks/use-courses";
+import { useCourse, useEnrollCourse } from "@/hooks/use-courses";
 import { cn } from "@/lib/utils";
+import { getApiErrorMessage } from "@/lib/get-api-error-message";
+import { useAuth } from "@/providers/auth-provider";
+import { toast } from "sonner";
 
 export default function CoursePage() {
   const params = useParams<{ slug: string }>();
+  const { isStudent } = useAuth();
   const { data: course, isLoading, isError } = useCourse(params.slug);
+  const enrollCourse = useEnrollCourse(params.slug);
 
   if (isLoading) {
     return <CoursePageSkeleton />;
@@ -55,12 +59,16 @@ export default function CoursePage() {
     );
   }
 
-  // Sample progress — replace with real enrollment/progress data later.
-  const completedCount = 1;
-  const progress =
-    course.lessonCount > 0
-      ? Math.round((completedCount / course.lessonCount) * 100)
-      : 0;
+  const completedCount = course.lessons.filter((lesson) => lesson.isCompleted).length;
+  const progress = course.progress;
+
+  function handleEnroll() {
+    enrollCourse.mutate(undefined, {
+      onError: (error) => {
+        toast.error(getApiErrorMessage(error, "تعذّر الاشتراك في الدورة"));
+      },
+    });
+  }
 
   return (
     <section className="mx-auto max-w-5xl px-4 py-8 sm:px-6 sm:py-12">
@@ -151,6 +159,22 @@ export default function CoursePage() {
             </span>
           </div>
 
+          {isStudent && !course.isEnrolled && course.isFree && (
+            <Button
+              className="mt-5 w-full sm:w-auto"
+              onClick={handleEnroll}
+              disabled={enrollCourse.isPending || !course.isFree}
+            >
+              {enrollCourse.isPending ? "جارٍ الاشتراك..." : "اشترك مجانًا"}
+            </Button>
+          )}
+
+          {isStudent && course.isEnrolled && (
+            <p className="mt-4 text-sm font-medium text-primary">
+              أنت مشترك في هذه الدورة ويمكنك فتح جميع الدروس.
+            </p>
+          )}
+
           <Progress value={progress} className="mt-4 h-2"  />
 
           <div className="mt-2 flex justify-between text-xs text-muted-foreground">
@@ -177,16 +201,15 @@ export default function CoursePage() {
 
         <div className="space-y-3">
           {course.lessons.map((lesson) => {
-            const locked = !lesson.isFree && lesson.order > 2;
-            const isCompleted = lesson.order <= completedCount;
+            const isCompleted = lesson.isCompleted;
 
             const content = (
               <Card
                 className={cn(
                   "group relative overflow-hidden transition-all duration-200",
-                  !locked &&
-                    "hover:-translate-y-0.5 hover:border-primary/30 hover:shadow-md",
-                  locked && "bg-muted/20"
+                  isCompleted
+                    ? "border-primary/40 bg-primary/5 shadow-sm"
+                    : "hover:-translate-y-0.5 hover:border-primary/30 hover:shadow-md"
                 )}
               >
                 <div className="flex items-center gap-3 p-4 sm:gap-4 sm:p-5">
@@ -210,16 +233,10 @@ export default function CoursePage() {
                   <span
                     className={cn(
                       "flex size-10 shrink-0 items-center justify-center rounded-full",
-                      locked
-                        ? "bg-muted text-muted-foreground"
-                        : "bg-primary/10 text-primary"
+                      "bg-primary/10 text-primary"
                     )}
                   >
-                    {locked ? (
-                      <Lock className="size-4" />
-                    ) : (
-                      <PlayCircle className="size-4" />
-                    )}
+                    <PlayCircle className="size-4" />
                   </span>
 
                   {/* Content */}
@@ -229,12 +246,22 @@ export default function CoursePage() {
                         {lesson.title}
                       </p>
 
-                      {lesson.isFree && !locked && (
+                      {lesson.isFree && (
                         <Badge
                           variant="secondary"
                           className="text-[10px] font-medium"
                         >
                           مجاني
+                        </Badge>
+                      )}
+
+                      {isCompleted && (
+                        <Badge
+                          variant="default"
+                          className="gap-1 text-[10px] font-medium"
+                        >
+                          <CheckCircle2 className="size-3" />
+                          مكتمل
                         </Badge>
                       )}
                     </div>
@@ -276,9 +303,7 @@ export default function CoursePage() {
                   <ArrowLeft
                     className={cn(
                       "hidden size-4 shrink-0 transition-all sm:block",
-                      locked
-                        ? "text-muted-foreground"
-                        : "text-muted-foreground group-hover:-translate-x-1 group-hover:text-primary"
+                      "text-muted-foreground group-hover:-translate-x-1 group-hover:text-primary"
                     )}
                   />
                 </div>
@@ -314,15 +339,7 @@ export default function CoursePage() {
               </Card>
             );
 
-            return locked ? (
-              <div
-                key={lesson.id}
-                className="cursor-not-allowed opacity-60"
-                title="هذا الدرس غير متاح حاليًا"
-              >
-                {content}
-              </div>
-            ) : (
+            return course.isEnrolled ? (
               <Link
                 key={lesson.id}
                 href={`/courses/${course.slug}/lessons/${lesson.id}`}
@@ -330,6 +347,14 @@ export default function CoursePage() {
               >
                 {content}
               </Link>
+            ) : (
+              <div
+                key={lesson.id}
+                className="cursor-not-allowed opacity-60"
+                title="اشترك في الدورة لفتح الدروس"
+              >
+                {content}
+              </div>
             );
           })}
         </div>

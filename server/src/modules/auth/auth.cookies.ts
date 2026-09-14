@@ -6,15 +6,15 @@ import { parseDurationToMs } from "../../utils/jwt";
 const REFRESH_TOKEN_TTL_MS = parseDurationToMs(env.JWT_REFRESH_EXPIRES_IN);
 
 /**
- * Refresh token lives in an httpOnly cookie scoped to /api/auth so it is
- * never readable by JS and is only sent to login/refresh/logout endpoints.
- * Access tokens stay in memory on the client (Authorization: Bearer).
+ * Refresh token lives in an httpOnly cookie so it is never readable by JS.
+ * It uses the root path because the frontend route middleware must be able to
+ * detect an active session before rendering protected pages.
  */
 export const refreshCookieOptions: CookieOptions = {
   httpOnly: true,
   secure: isProduction,
   sameSite: "lax",
-  path: "/api/auth",
+  path: "/",
   maxAge: REFRESH_TOKEN_TTL_MS,
 };
 

@@ -3,7 +3,7 @@ import { ApiError } from "../../utils/apiError";
 import { SubmitQuizAttemptInput } from "./lessons.validation";
 
 export const lessonsService = {
-  async getById(lessonId: string) {
+  async getById(lessonId: string, userId: string) {
     const lesson = await prisma.lesson.findUnique({
       where: { id: lessonId },
       include: {
@@ -18,11 +18,64 @@ export const lessonsService = {
       },
     });
     if (!lesson) throw ApiError.notFound("الدرس غير موجود");
-    return lesson;
+
+    const enrollment = await prisma.enrollment.findUnique({
+      where: { userId_courseId: { userId, courseId: lesson.courseId } },
+      select: { completedLessonIds: true },
+    });
+    if (!enrollment) {
+      throw ApiError.forbidden("يجب الاشتراك في الدورة لفتح الدروس");
+    }
+
+    return {
+      ...lesson,
+      isCompleted: enrollment?.completedLessonIds.includes(lesson.id) ?? false,
+    };
+  },
+
+  async complete(userId: string, lessonId: string) {
+    const lesson = await prisma.lesson.findUnique({
+      where: { id: lessonId },
+      select: { id: true, courseId: true, order: true },
+    });
+    if (!lesson) throw ApiError.notFound("الدرس غير موجود");
+
+    const enrollment = await prisma.enrollment.findUnique({
+      where: { userId_courseId: { userId, courseId: lesson.courseId } },
+    });
+    if (!enrollment) {
+      throw ApiError.forbidden("يجب التسجيل في الدورة قبل إكمال دروسها");
+    }
+
+    const completedLessonIds = enrollment.completedLessonIds.includes(lesson.id)
+      ? enrollment.completedLessonIds
+      : [...enrollment.completedLessonIds, lesson.id];
+    const lessonCount = await prisma.lesson.count({ where: { courseId: lesson.courseId } });
+    const progress = lessonCount
+      ? Math.round((completedLessonIds.length / lessonCount) * 100)
+      : 0;
+
+    const updatedEnrollment = await prisma.enrollment.update({
+      where: { id: enrollment.id },
+      data: { completedLessonIds, progress },
+    });
+
+    const nextLesson = await prisma.lesson.findFirst({
+      where: { courseId: lesson.courseId, order: { gt: lesson.order } },
+      select: { id: true, order: true },
+      orderBy: { order: "asc" },
+    });
+
+    return {
+      lessonId: lesson.id,
+      isCompleted: true,
+      progress: updatedEnrollment.progress,
+      nextLesson,
+    };
   },
 
   /** Quiz questions for a student to answer — correctIndex is withheld until grading. */
-  async getQuizForTaking(lessonId: string) {
+  async getQuizForTaking(lessonId: string, userId: string) {
     const lesson = await prisma.lesson.findUnique({
       where: { id: lessonId },
       include: {
@@ -35,6 +88,14 @@ export const lessonsService = {
 
     if (!lesson || !lesson.hasQuiz) {
       throw ApiError.notFound("لا يوجد اختبار لهذا الدرس");
+    }
+
+    const enrollment = await prisma.enrollment.findUnique({
+      where: { userId_courseId: { userId, courseId: lesson.courseId } },
+      select: { id: true },
+    });
+    if (!enrollment) {
+      throw ApiError.forbidden("يجب الاشتراك في الدورة لفتح الاختبار");
     }
 
     return {

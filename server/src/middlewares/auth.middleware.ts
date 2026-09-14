@@ -46,3 +46,32 @@ export function attachUserIfPresent(
   }
   next();
 }
+
+const PUBLIC_API_ROUTES = new Set([
+  "GET /api/health",
+  "GET /api/subjects",
+  "GET /api/teachers",
+  "POST /api/auth/register",
+  "POST /api/auth/login",
+  "POST /api/auth/refresh",
+  "POST /api/auth/logout",
+]);
+
+function isPublicApiRequest(req: Request): boolean {
+  if (req.method === "OPTIONS") return true;
+
+  const route = `${req.method} ${req.path.replace(/\/$/, "")}`;
+  return (
+    PUBLIC_API_ROUTES.has(route) ||
+    (req.method === "GET" && req.path.startsWith("/api/teachers/"))
+  );
+}
+
+/**
+ * Protects the API by default while leaving public browsing and session
+ * bootstrap endpoints available without an access token.
+ */
+export function requireApiAuth(req: Request, res: Response, next: NextFunction) {
+  if (isPublicApiRequest(req)) return next();
+  return requireAuth(req, res, next);
+}

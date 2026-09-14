@@ -1,8 +1,9 @@
-import { useMutation, useQuery } from "@tanstack/react-query";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 
 import { apiClient, unwrap } from "@/lib/api-client";
 import {
   ApiLessonDetail,
+  ApiLessonCompletionResponse,
   ApiQuizAttemptAnswer,
   ApiQuizAttemptResponse,
   ApiQuizForTaking,
@@ -36,5 +37,18 @@ export function useSubmitQuizAttempt(lessonId: string | undefined) {
       unwrap<ApiQuizAttemptResponse>(
         apiClient.post(`/lessons/${lessonId}/quiz/attempts`, payload)
       ),
+  });
+}
+
+export function useCompleteLesson(lessonId: string | undefined) {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: () =>
+      unwrap<ApiLessonCompletionResponse>(apiClient.post(`/lessons/${lessonId}/complete`)),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["lesson", lessonId] });
+      queryClient.invalidateQueries({ queryKey: ["course"] });
+    },
   });
 }

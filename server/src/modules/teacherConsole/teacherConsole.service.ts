@@ -112,8 +112,8 @@ export const teacherConsoleService = {
         description: input.description,
         duration: input.duration ?? "—",
         order,
-        isFree: input.isFree,
         videoId,
+        thumbnailUrl: `https://img.youtube.com/vi/${videoId}/hqdefault.jpg`,
       },
     });
 
@@ -154,7 +154,7 @@ export const teacherConsoleService = {
             order: qIndex + 1,
             options: {
               create: q.options.map((o, oIndex) => ({
-                text: o.text || null,
+                text: o.text ?? "",
                 imageUrl: o.imageUrl || null,
                 order: oIndex,
               })),

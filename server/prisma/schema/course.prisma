@@ -8,6 +8,7 @@ model Course {
   teacherId         String         @map("teacher_id")
   level             Level
   price             Int            @default(0)
+  isFree            Boolean        @default(false) @map("is_free")
   ratingCache       Float          @default(0) @map("rating_cache")
   studentCountCache Int            @default(0) @map("student_count_cache")
   createdAt         DateTime       @default(now()) @map("created_at")

@@ -335,8 +335,8 @@ type EnrollmentWithRelations = Enrollment & {
 async function main(): Promise<void> {
   console.log("Cleaning existing data...");
   // الحذف بترتيب آمن حسب الاعتمادية بين الجداول
-  await prisma.quiz_options.deleteMany();
-  await prisma.quiz_questions.deleteMany();
+  await prisma.quizOption.deleteMany();
+  await prisma.quizQuestion.deleteMany();
   await prisma.quizAttempt.deleteMany();
   await prisma.enrollment.deleteMany();
   await prisma.lesson.deleteMany();
@@ -452,8 +452,16 @@ async function main(): Promise<void> {
           teacherId: teacher.id,
           level: randomChoice(COURSE_LEVELS),
           price: randomChoice([0, 150, 250, 350, 500]),
+          isFree: false,
         },
       });
+
+      if (course.price === 0) {
+        await prisma.course.update({
+          where: { id: course.id },
+          data: { isFree: true },
+        });
+      }
 
       const courseWithTeacher: CourseWithTeacher = { ...course, teacher };
       courses.push(courseWithTeacher);
@@ -473,7 +481,6 @@ async function main(): Promise<void> {
             title: shuffledTitles[l] || `الدرس ${l + 1}`,
             order: l + 1,
             duration: `${randomInt(5, 25)}:${String(randomInt(0, 59)).padStart(2, "0")}`,
-            isFree: l === 0, // الدرس الأول مجاني كمعاينة
             description: `في هذا الدرس، يستكشف الطلاب ${(
               shuffledTitles[l] || "الموضوع"
             )} ضمن مادة ${teacher.subject.name}.`,
@@ -499,17 +506,17 @@ async function main(): Promise<void> {
                 ? "CODE"
                 : "AR";
 
-            const question = await prisma.quiz_questions.create({
+            const question = await prisma.quizQuestion.create({
               data: {
                 id: uuid(),
-                lesson_id: lesson.id,
+                lessonId: lesson.id,
                 question: `السؤال ${q + 1}: ما الصحيح بخصوص "${lesson.title}" في مادة ${teacher.subject.name}؟`,
-                content_type: contentType,
-                code_language:
+                contentType,
+                codeLanguage:
                   contentType === "CODE"
                     ? randomChoice<CodeLanguage>(["PYTHON", "JAVASCRIPT"])
                     : null,
-                correct_index: 0, // يُحدَّد بعد إنشاء الخيارات أدناه
+                correctIndex: 0, // يُحدَّد بعد إنشاء الخيارات أدناه
                 order: q + 1,
               },
             });
@@ -518,10 +525,10 @@ async function main(): Promise<void> {
             const correctIndex = randomInt(0, optionCount - 1);
 
             for (let o = 0; o < optionCount; o++) {
-              await prisma.quiz_options.create({
+              await prisma.quizOption.create({
                 data: {
                   id: uuid(),
-                  question_id: question.id,
+                  questionId: question.id,
                   text:
                     o === correctIndex
                       ? `الإجابة الصحيحة للسؤال ${q + 1}`
@@ -531,9 +538,9 @@ async function main(): Promise<void> {
               });
             }
 
-            await prisma.quiz_questions.update({
+            await prisma.quizQuestion.update({
               where: { id: question.id },
-              data: { correct_index: correctIndex },
+              data: { correctIndex },
             });
           }
         }
@@ -578,9 +585,9 @@ async function main(): Promise<void> {
     );
 
     for (const lesson of quizLessons) {
-      const questions = await prisma.quiz_questions.findMany({
-        where: { lesson_id: lesson.id },
-        include: { quiz_options: true },
+      const questions = await prisma.quizQuestion.findMany({
+        where: { lessonId: lesson.id },
+        include: { options: true },
       });
       if (questions.length === 0) continue;
 
@@ -592,8 +599,8 @@ async function main(): Promise<void> {
         questionId: q.id,
         selectedIndex:
           idx < correctCount
-            ? q.correct_index
-            : (q.correct_index + 1) % q.quiz_options.length,
+            ? q.correctIndex
+            : (q.correctIndex + 1) % q.options.length,
         isCorrect: idx < correctCount,
       }));
 

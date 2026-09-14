@@ -1,7 +1,11 @@
-import { useQuery } from "@tanstack/react-query";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 
 import { apiClient, unwrap } from "@/lib/api-client";
-import { ApiCourseDetail, ApiCourseSummary } from "@/lib/api-types";
+import {
+  ApiCourseDetail,
+  ApiCourseEnrollmentResponse,
+  ApiCourseSummary,
+} from "@/lib/api-types";
 
 export function useCourses(filters?: { subjectId?: string; teacherId?: string }) {
   return useQuery({
@@ -23,5 +27,19 @@ export function useCourse(slug: string | undefined) {
         (d) => d.course
       ),
     enabled: Boolean(slug),
+  });
+}
+
+export function useEnrollCourse(slug: string | undefined) {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: () =>
+      unwrap<{ enrollment: ApiCourseEnrollmentResponse }>(
+        apiClient.post(`/courses/${slug}/enroll`)
+      ).then((data) => data.enrollment),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["course", slug] });
+    },
   });
 }

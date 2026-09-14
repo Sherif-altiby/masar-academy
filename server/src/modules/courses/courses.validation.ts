@@ -9,6 +9,7 @@ export const createCourseSchema = z.object({
   subjectId: z.string().uuid("المادة الدراسية غير صحيحة"),
   level: z.enum(LEVEL_SLUGS, { message: "المرحلة الدراسية غير صحيحة" }),
   price: z.coerce.number().int().min(0).default(0),
+  isFree: z.coerce.boolean().default(false),
 });
 export type CreateCourseInput = z.infer<typeof createCourseSchema>;
 

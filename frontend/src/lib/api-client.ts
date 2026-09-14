@@ -1,6 +1,7 @@
 import axios, { AxiosError, InternalAxiosRequestConfig } from "axios";
 
 import { API_BASE_URL } from "./env";
+import { ApiUser } from "./api-types";
 import { getAccessToken, setAccessToken } from "./token-store";
 
 export const apiClient = axios.create({
@@ -23,9 +24,14 @@ interface RetriableConfig extends InternalAxiosRequestConfig {
 // Concurrent 401s while a refresh is in flight all wait on the same promise,
 // instead of each firing their own /auth/refresh call (which would race and
 // invalidate each other's rotated refresh token).
-let refreshPromise: Promise<string | null> | null = null;
+export interface RefreshSessionResponse {
+  user: ApiUser;
+  accessToken: string;
+}
 
-async function refreshAccessToken(): Promise<string | null> {
+let refreshPromise: Promise<RefreshSessionResponse> | null = null;
+
+export function refreshSession(): Promise<RefreshSessionResponse> {
   if (!refreshPromise) {
     refreshPromise = axios
       .post(
@@ -34,13 +40,13 @@ async function refreshAccessToken(): Promise<string | null> {
         { withCredentials: true }
       )
       .then((res) => {
-        const token: string = res.data.data.accessToken;
-        setAccessToken(token);
-        return token;
+        const session: RefreshSessionResponse = res.data.data;
+        setAccessToken(session.accessToken);
+        return session;
       })
-      .catch(() => {
+      .catch((error) => {
         setAccessToken(null);
-        return null;
+        throw error;
       })
       .finally(() => {
         refreshPromise = null;
@@ -54,14 +60,17 @@ apiClient.interceptors.response.use(
   async (error: AxiosError) => {
     const original = error.config as RetriableConfig | undefined;
 
-    const isAuthRoute = original?.url?.includes("/auth/login") || original?.url?.includes("/auth/register");
+    const isAuthRoute = ["/auth/login", "/auth/register", "/auth/refresh", "/auth/logout"]
+      .some((route) => original?.url?.includes(route));
 
     if (error.response?.status === 401 && original && !original._retry && !isAuthRoute) {
       original._retry = true;
-      const newToken = await refreshAccessToken();
-      if (newToken) {
-        original.headers.Authorization = `Bearer ${newToken}`;
+      try {
+        const session = await refreshSession();
+        original.headers.Authorization = `Bearer ${session.accessToken}`;
         return apiClient(original);
+      } catch {
+        return Promise.reject(error);
       }
     }
 

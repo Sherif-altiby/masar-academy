@@ -1,5 +1,8 @@
 import { Request, Response, Router } from "express";
 
+import { attachUserIfPresent } from "../../middlewares/auth.middleware";
+import { requireAuth } from "../../middlewares/auth.middleware";
+import { requireRole } from "../../middlewares/role.middleware";
 import { asyncHandler } from "../../utils/asyncHandler";
 import { coursesService } from "./courses.service";
 
@@ -17,9 +20,20 @@ router.get(
 
 router.get(
   "/:slug",
+  attachUserIfPresent,
   asyncHandler(async (req: Request, res: Response) => {
-    const course = await coursesService.getBySlug(String(req.params.slug));
+    const course = await coursesService.getBySlug(String(req.params.slug), req.user?.id);
     res.json({ success: true, data: { course } });
+  })
+);
+
+router.post(
+  "/:slug/enroll",
+  requireAuth,
+  requireRole("STUDENT"),
+  asyncHandler(async (req: Request, res: Response) => {
+    const enrollment = await coursesService.enroll(req.user!.id, String(req.params.slug));
+    res.status(201).json({ success: true, data: { enrollment } });
   })
 );
 

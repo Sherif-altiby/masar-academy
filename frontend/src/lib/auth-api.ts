@@ -1,4 +1,4 @@
-import { apiClient, unwrap } from "./api-client";
+import { apiClient, refreshSession, unwrap } from "./api-client";
 import { ApiUser } from "./api-types";
 
 export interface LoginPayload {
@@ -43,7 +43,7 @@ export const authApi = {
   register: (payload: RegisterPayload) =>
     unwrap<AuthResponse>(apiClient.post("/auth/register", payload)),
 
-  refresh: () => unwrap<AuthResponse>(apiClient.post("/auth/refresh")),
+  refresh: () => refreshSession(),
 
   logout: () => unwrap<null>(apiClient.post("/auth/logout")),
 

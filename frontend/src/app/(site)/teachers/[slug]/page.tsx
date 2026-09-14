@@ -163,24 +163,25 @@ export default function TeacherProfilePage() {
             </div>
 
             {/* Stats */}
-            <div className="mt-8 grid overflow-hidden rounded-xl border border-border/70 bg-secondary/30 sm:grid-cols-3">
+            <div className="mt-8 grid overflow-hidden rounded-2xl border border-border/70 bg-secondary/30 sm:grid-cols-3">
               <Stat
                 icon={Users}
                 value={teacher.studentCount.toLocaleString()}
                 label="طالب"
+                accent="text-blue-500"
               />
-
               <Stat
                 icon={BookOpen}
                 value={teacher.courses.length}
                 label="دورة"
+                accent="text-emerald-500"
                 className="border-t sm:border-r sm:border-t-0"
               />
-
               <Stat
                 icon={GraduationCap}
                 value={teacher.yearsExperience}
                 label="سنوات خبرة"
+                accent="text-amber-500"
                 className="border-t sm:border-t-0"
               />
             </div>
@@ -200,7 +201,7 @@ export default function TeacherProfilePage() {
               />
 
               <Card className="mt-4 rounded-2xl border-border/70 shadow-sm">
-                <CardContent className="p-6">
+                <CardContent className=" px-4">
                   <p className="text-[15px] leading-8 text-muted-foreground">
                     {teacher.about}
                   </p>
@@ -226,18 +227,15 @@ export default function TeacherProfilePage() {
               </div>
 
               <div className="mt-4 grid gap-4 sm:grid-cols-2">
-                {teacher.courses.map((course) => (
-                  <Link
-                    key={course.id}
-                    href={`/courses/${course.slug}`}
-                    className="group block"
-                  >
+                {teacher.courses.map((course) => {
+                  const card = (
                     <Card
                       className={cn(
                         "h-full rounded-2xl border-border/70",
                         "transition-all duration-200",
-                        "hover:-translate-y-1 hover:border-primary/30",
-                        "hover:shadow-md"
+                        course.isFree
+                          ? "hover:-translate-y-1 hover:border-primary/30 hover:shadow-md"
+                          : "cursor-not-allowed opacity-60 grayscale"
                       )}
                     >
                       <CardHeader className="pb-3">
@@ -246,8 +244,18 @@ export default function TeacherProfilePage() {
                             <BookOpen className="size-5" />
                           </div>
 
-                          <div className="flex size-8 items-center justify-center rounded-full bg-secondary text-muted-foreground opacity-0 transition-all duration-200 group-hover:opacity-100">
-                            <ArrowUpLeft className="size-4" />
+                          <div className="flex items-center gap-2">
+                            <Badge
+                              variant={course.isFree ? "secondary" : "accent"}
+                              className="text-[10px]"
+                            >
+                              {course.isFree ? "مجاني" : "مدفوع"}
+                            </Badge>
+                            {course.isFree && (
+                              <div className="flex size-8 items-center justify-center rounded-full bg-secondary text-muted-foreground opacity-0 transition-all duration-200 group-hover:opacity-100">
+                                <ArrowUpLeft className="size-4" />
+                              </div>
+                            )}
                           </div>
                         </div>
 
@@ -282,8 +290,22 @@ export default function TeacherProfilePage() {
                         </div>
                       </CardContent>
                     </Card>
-                  </Link>
-                ))}
+                  );
+
+                  return course.isFree ? (
+                    <Link
+                      key={course.id}
+                      href={`/courses/${course.slug}`}
+                      className="group block"
+                    >
+                      {card}
+                    </Link>
+                  ) : (
+                    <div key={course.id} className="group block" aria-disabled="true">
+                      {card}
+                    </div>
+                  );
+                })}
               </div>
             </section>
           </div>
@@ -398,29 +420,37 @@ export default function TeacherProfilePage() {
   );
 }
 
-/* ---------------------------------------------
-   Reusable components
---------------------------------------------- */
-
 function Stat({
   icon: Icon,
   value,
   label,
+  accent = "text-primary",
   className,
 }: {
   icon: React.ElementType;
   value: string | number;
   label: string;
+  accent?: string;
   className?: string;
 }) {
   return (
-    <div className={cn("flex items-center gap-3 p-4 sm:p-5", className)}>
-      <div className="flex size-10 shrink-0 items-center justify-center rounded-xl bg-background text-primary shadow-sm">
-        <Icon className="size-5" />
+    <div
+      className={cn(
+        "group flex items-center gap-3 p-4 transition-colors duration-200 hover:bg-background/60 sm:p-5",
+        className
+      )}
+    >
+      <div
+        className={cn(
+          "flex size-10 shrink-0 items-center justify-center rounded-xl bg-background shadow-sm ring-1 ring-border/60 transition-transform duration-300 group-hover:scale-110 group-hover:shadow-md",
+          accent
+        )}
+      >
+        <Icon className="size-5" strokeWidth={2.25} />
       </div>
 
       <div>
-        <p className="font-display text-lg font-bold">
+        <p className="font-display text-lg font-bold tabular-nums tracking-tight text-foreground">
           {value}
         </p>
 
@@ -431,6 +461,7 @@ function Stat({
     </div>
   );
 }
+
 
 function SectionHeading({
   icon: Icon,

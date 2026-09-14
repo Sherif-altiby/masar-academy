@@ -1,6 +1,6 @@
 import { Request, Response, Router } from "express";
 
-import { requireAuth } from "../../middlewares/auth.middleware";
+import { attachUserIfPresent, requireAuth } from "../../middlewares/auth.middleware";
 import { requireRole } from "../../middlewares/role.middleware";
 import { validate } from "../../middlewares/validate.middleware";
 import { asyncHandler } from "../../utils/asyncHandler";
@@ -11,16 +11,29 @@ const router = Router();
 
 router.get(
   "/:id",
+  attachUserIfPresent,
   asyncHandler(async (req: Request, res: Response) => {
-    const lesson = await lessonsService.getById(String(req.params.id));
+    const lesson = await lessonsService.getById(String(req.params.id), req.user!.id);
     res.json({ success: true, data: { lesson } });
+  })
+);
+
+router.post(
+  "/:id/complete",
+  requireAuth,
+  requireRole("STUDENT"),
+  asyncHandler(async (req: Request, res: Response) => {
+    const result = await lessonsService.complete(req.user!.id, String(req.params.id));
+    res.json({ success: true, data: result });
   })
 );
 
 router.get(
   "/:id/quiz",
+  requireAuth,
+  requireRole("STUDENT"),
   asyncHandler(async (req: Request, res: Response) => {
-    const quiz = await lessonsService.getQuizForTaking(String(req.params.id));
+    const quiz = await lessonsService.getQuizForTaking(String(req.params.id), req.user!.id);
     res.json({ success: true, data: { quiz } });
   })
 );

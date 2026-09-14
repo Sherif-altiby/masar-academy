@@ -18,6 +18,7 @@ function mapCourseSummary(course: {
   teacherId: string;
   level: Level;
   price: number;
+  isFree: boolean;
   ratingCache: number;
   studentCountCache: number;
   _count: { lessons: number };
@@ -32,6 +33,7 @@ function mapCourseSummary(course: {
     teacherId: course.teacherId,
     level: LEVEL_ENUM_TO_SLUG[course.level],
     price: course.price,
+    isFree: course.isFree,
     rating: course.ratingCache,
     studentCount: course.studentCountCache,
     lessonCount: course._count.lessons,
@@ -51,7 +53,7 @@ export const coursesService = {
     return courses.map(mapCourseSummary);
   },
 
-  async getBySlug(slug: string) {
+  async getBySlug(slug: string, userId?: string) {
     const course = await prisma.course.findUnique({
       where: { slug },
       include: {
@@ -64,7 +66,6 @@ export const coursesService = {
             title: true,
             order: true,
             duration: true,
-            isFree: true,
             description: true,
             videoId: true,
             hasPdf: true,
@@ -78,11 +79,49 @@ export const coursesService = {
 
     if (!course) throw ApiError.notFound("الدورة غير موجودة");
 
+    const enrollment = userId
+      ? await prisma.enrollment.findUnique({
+          where: { userId_courseId: { userId, courseId: course.id } },
+          select: { completedLessonIds: true, progress: true },
+        })
+      : null;
+
     return {
       ...mapCourseSummary(course),
       teacherName: course.teacher.user.fullName,
       teacherSlug: course.teacher.slug,
-      lessons: course.lessons,
+      isEnrolled: Boolean(enrollment),
+      progress: enrollment?.progress ?? 0,
+      lessons: course.lessons.map((lesson) => ({
+        ...lesson,
+        isCompleted: enrollment?.completedLessonIds.includes(lesson.id) ?? false,
+      })),
+    };
+  },
+
+  async enroll(userId: string, slug: string) {
+    const course = await prisma.course.findUnique({
+      where: { slug },
+      select: { id: true, isFree: true },
+    });
+    if (!course) throw ApiError.notFound("الدورة غير موجودة");
+    if (!course.isFree) {
+      throw ApiError.badRequest("هذه الدورة مدفوعة ولا يمكن الاشتراك بها مجانًا");
+    }
+
+    const enrollment = await prisma.enrollment.upsert({
+      where: { userId_courseId: { userId, courseId: course.id } },
+      create: { userId, courseId: course.id },
+      update: {},
+      select: { id: true, progress: true, completedLessonIds: true },
+    });
+
+    return {
+      courseId: course.id,
+      enrollmentId: enrollment.id,
+      isEnrolled: true,
+      progress: enrollment.progress,
+      completedLessonIds: enrollment.completedLessonIds,
     };
   },
 
@@ -107,6 +146,7 @@ export const coursesService = {
         teacherId: teacherProfileId,
         level: LEVEL_SLUG_TO_ENUM[input.level],
         price: input.price,
+        isFree: input.isFree,
         imageUrl: input.imageUrl,
       },
       include: { _count: { select: { lessons: true } } },

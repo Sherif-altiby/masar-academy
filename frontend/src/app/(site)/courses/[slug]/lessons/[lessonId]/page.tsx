@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useParams } from "next/navigation";
+import { useParams, useRouter } from "next/navigation";
 import {
   ArrowLeft,
   ArrowRight,
@@ -11,19 +11,40 @@ import {
   HelpCircle,
   Loader2,
 } from "lucide-react";
+import { toast } from "sonner";
 
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { YoutubePlayer } from "@/components/shared/youtube-player";
 import { useCourse } from "@/hooks/use-courses";
-import { useLesson } from "@/hooks/use-lessons";
+import { useCompleteLesson, useLesson } from "@/hooks/use-lessons";
 import { API_BASE_URL } from "@/lib/env";
+import { getApiErrorMessage } from "@/lib/get-api-error-message";
+import { useAuth } from "@/providers/auth-provider";
 
 export default function LessonPage() {
   const params = useParams<{ slug: string; lessonId: string }>();
+  const router = useRouter();
+  const { isStudent } = useAuth();
   const { data: course } = useCourse(params.slug);
   const { data: lesson, isLoading, isError } = useLesson(params.lessonId);
+  const completeLesson = useCompleteLesson(params.lessonId);
+
+  function handleComplete() {
+    completeLesson.mutate(undefined, {
+      onSuccess: (result) => {
+        if (result.nextLesson) {
+          router.push(`/courses/${params.slug}/lessons/${result.nextLesson.id}`);
+        } else {
+          router.push(`/courses/${params.slug}`);
+        }
+      },
+      onError: (error) => {
+        toast.error(getApiErrorMessage(error, "تعذّر إكمال الدرس"));
+      },
+    });
+  }
 
   if (isLoading) {
     return (
@@ -131,6 +152,23 @@ export default function LessonPage() {
               </Button>
             </Card>
           )}
+        </div>
+      )}
+
+      {isStudent && (
+        <div className="mt-8 flex justify-center">
+          <Button
+            onClick={handleComplete}
+            disabled={lesson.isCompleted || completeLesson.isPending}
+            className="min-w-52"
+          >
+            {completeLesson.isPending ? (
+              <Loader2 className="animate-spin" />
+            ) : (
+              <CheckCircle2 />
+            )}
+            {lesson.isCompleted ? "تم إكمال الدرس" : "تحديد الدرس كمكتمل"}
+          </Button>
         </div>
       )}
 

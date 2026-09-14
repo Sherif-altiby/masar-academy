@@ -143,7 +143,7 @@ export function SiteHeader() {
                 <Menu />
               </Button>
             </SheetTrigger>
-            <SheetContent side="left">
+            <SheetContent side="right" dir="rtl">
               <SheetHeader>
                 <SheetTitle className="font-display">أكاديمية مسار</SheetTitle>
               </SheetHeader>

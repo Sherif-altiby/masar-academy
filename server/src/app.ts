@@ -8,6 +8,7 @@ import morgan from "morgan";
 import { env } from "./config/env";
 import { UPLOADS_STATIC_ROOT } from "./config/upload";
 import { errorHandler, notFoundHandler } from "./middlewares/error.middleware";
+import { requireApiAuth } from "./middlewares/auth.middleware";
 import { authRoutes } from "./modules/auth/auth.routes";
 import { coursesRoutes } from "./modules/courses/courses.routes";
 import { lessonsRoutes } from "./modules/lessons/lessons.routes";
@@ -19,12 +20,16 @@ import { teachersRoutes } from "./modules/teachers/teachers.routes";
 export const app = express();
 
 app.use(helmet({ crossOriginResourcePolicy: false }));
+ 
+
 app.use(
   cors({
     origin: env.CORS_ORIGIN.split(",").map((o) => o.trim()),
     credentials: true,
   })
 );
+
+
 app.use(compression());
 app.use(express.json());
 app.use(cookieParser());
@@ -38,6 +43,8 @@ app.use("/uploads", express.static(UPLOADS_STATIC_ROOT));
 app.get("/api/health", (_req: Request, res: Response) => {
   res.json({ success: true, data: { status: "ok", timestamp: new Date().toISOString() } });
 });
+
+app.use(requireApiAuth);
 
 app.use("/api/auth", authRoutes);
 app.use("/api/subjects", subjectsRoutes);

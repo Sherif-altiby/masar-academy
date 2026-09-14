@@ -7,7 +7,6 @@ model Lesson {
   title               String
   order               Int
   duration            String
-  isFree              Boolean       @default(false) @map("is_free")
   description         String
 
   videoId             String        @map("video_id")
