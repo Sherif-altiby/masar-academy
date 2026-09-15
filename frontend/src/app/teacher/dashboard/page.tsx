@@ -5,7 +5,6 @@ import {
   BookOpen,
   CheckCircle2,
   GraduationCap,
-  Loader2,
   PlaySquare,
   PlusCircle,
   Star,
@@ -27,6 +26,7 @@ import { QuizPerformanceChart } from "@/components/teacher/charts/quiz-performan
 import { CourseEnrollmentChart } from "@/components/teacher/charts/course-enrollment-chart";
 import { ContentMixChart } from "@/components/teacher/charts/content-mix-chart";
 import { CompletionRateChart } from "@/components/teacher/charts/completion-rate-chart";
+import { TeacherDashboardSkeleton } from "@/components/skeletons/teacher-dashboard-skeleton";
 import { useMyCourses, useMyTeacherProfile } from "@/hooks/use-teacher-console";
 import { useAuth } from "@/providers/auth-provider";
 import {
@@ -44,11 +44,7 @@ export default function TeacherDashboardPage() {
   const { data: courses, isLoading } = useMyCourses();
 
   if (isLoading || !courses) {
-    return (
-      <div className="flex min-h-[60vh] items-center justify-center">
-        <Loader2 className="size-6 animate-spin text-muted-foreground" />
-      </div>
-    );
+    return <TeacherDashboardSkeleton />;
   }
 
   const totalStudents = courses.reduce((sum, c) => sum + c.studentCount, 0);
@@ -60,7 +56,7 @@ export default function TeacherDashboardPage() {
         <div>
           <p className="text-sm font-semibold text-primary">نظرة عامة</p>
           <h1 className="mt-1 font-display text-2xl font-semibold tracking-tight sm:text-3xl">
-            أهلًا بك، {user?.fullName.split(" ")[0]} 👋
+            أهلًا بك، {user?.fullName.split(" ")[0]} 
           </h1>
           <p className="mt-1 text-sm text-muted-foreground">
             إليك ملخص أداء دوراتك هذا الشهر.

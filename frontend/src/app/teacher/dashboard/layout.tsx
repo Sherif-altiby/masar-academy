@@ -7,7 +7,6 @@ import { GraduationCap, Menu } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Sheet, SheetContent, SheetTitle } from "@/components/ui/sheet";
 import { ThemeToggle } from "@/components/shared/theme-toggle";
-import { RequireRole } from "@/components/shared/require-role";
 import { DashboardSidebarContent } from "@/components/teacher/dashboard-sidebar";
 
 export default function TeacherDashboardLayout({
@@ -18,8 +17,7 @@ export default function TeacherDashboardLayout({
   const [mobileNavOpen, setMobileNavOpen] = React.useState(false);
 
   return (
-    <RequireRole role="TEACHER">
-      <div className="flex min-h-screen">
+    <div className="flex min-h-screen">
       {/* Desktop sidebar */}
       <aside className="sticky top-0 hidden h-screen w-64 shrink-0 border-l bg-card md:block">
         <DashboardSidebarContent />
@@ -66,6 +64,5 @@ export default function TeacherDashboardLayout({
         <main className="flex-1 p-4 sm:p-6 lg:p-8">{children}</main>
       </div>
     </div>
-    </RequireRole>
   );
 }

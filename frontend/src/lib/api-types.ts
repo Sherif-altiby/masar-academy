@@ -6,7 +6,7 @@ export interface ApiUser {
   email: string;
   phone: string;
   parentPhone: string | null;
-  educationLevel: "PREPARATORY" | "SECONDARY" | "BACCALAUREATE" | null;
+  educationLevel: string | null;
   grade: string | null;
   role: ApiRole;
   avatarInitials: string;
@@ -14,61 +14,16 @@ export interface ApiUser {
   createdAt: string;
 }
 
-export interface ApiSubject {
-  id: string;
-  name: string;
-  icon: string;
-  description: string;
-  imageUrl: string;
-  color: string;
-  courseCount: number;
-  studentCount: number;
-}
-
-export interface ApiTeacherSummary {
-  id: string;
-  name: string;
-  slug: string;
-  avatarInitials: string;
-  avatarUrl: string | null;
-  title: string;
-  subjectId: string;
-  subjectName: string;
-  yearsExperience: number;
-  rating: number;
-  reviewCount: number;
-  studentCount: number;
-}
-
-export interface ApiTeacherDetail extends ApiTeacherSummary {
-  about: string;
-  credentials: string[];
-  courses: {
-    id: string;
-    slug: string;
-    title: string;
-    description: string;
-    isFree: boolean;
-    lessonCount: number;
-    studentCount: number;
-    rating: number;
-  }[];
-  reviews: {
-    id: string;
-    studentName: string;
-    rating: number;
-    comment: string | null;
-    date: string;
-  }[];
-}
-
 export interface ApiCourseSummary {
   id: string;
   slug: string;
   title: string;
   description: string;
+  imageUrl: string;
   subjectId: string;
+  subjectName: string;
   teacherId: string;
+  teacherName: string;
   level: string;
   price: number;
   isFree: boolean;
@@ -114,13 +69,14 @@ export interface ApiLessonDetail extends ApiLessonSummary {
   course: { id: string; slug: string; title: string } | undefined;
 }
 
-export type ApiContentType = "AR" | "EN" | "CODE";
+export type ApiContentType = "AR" | "CODE";
 export type ApiCodeLanguage = "PYTHON" | "JAVASCRIPT";
 
 export interface ApiQuizOptionForTaking {
   id: string;
   text: string | null;
   imageUrl: string | null;
+  order: number;
 }
 
 export interface ApiQuizQuestionForTaking {
@@ -184,6 +140,7 @@ export interface ApiTeacherOwnCourse {
   slug: string;
   title: string;
   description: string;
+  imageUrl: string;
   level: string;
   price: number;
   rating: number;
@@ -212,6 +169,7 @@ export interface ApiTeacherOwnCourseDetail {
   slug: string;
   title: string;
   description: string;
+  imageUrl: string;
   studentCount: number;
   lessons: ApiTeacherOwnLesson[];
 }

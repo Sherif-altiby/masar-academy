@@ -13,6 +13,7 @@ export interface AccessTokenPayload {
 export interface RefreshTokenPayload {
   sub: string; // user id
   tokenId: string; // unique id for this specific refresh token, used to look it up in DB
+  role: Role;
 }
 
 export function signAccessToken(payload: AccessTokenPayload): string {

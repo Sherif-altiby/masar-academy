@@ -51,6 +51,7 @@ async function issueTokenPair(userId: string, role: Role) {
   const refreshToken = signRefreshToken({
     sub: userId,
     tokenId,
+    role,
   });
 
   await prisma.refreshToken.create({
@@ -236,6 +237,7 @@ export const authService = {
     const nextRefreshToken = signRefreshToken({
       sub: user.id,
       tokenId: nextTokenId,
+      role: user.role,
     });
     const nextTokenHash = hashToken(nextRefreshToken);
     const revokedAt = new Date();

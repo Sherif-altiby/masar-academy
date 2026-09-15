@@ -44,6 +44,7 @@ export function useMyCourse(slug: string | undefined) {
 export interface CreateCoursePayload {
   title: string;
   description: string;
+  imageUrl: string;
   subjectId: string;
   level: string;
   price: number;
@@ -58,6 +59,36 @@ export function useCreateCourse() {
       ),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["teacher-courses"] });
+    },
+  });
+}
+
+export function useDeleteCourse() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (slug: string) =>
+      unwrap(apiClient.delete(`/teacher/courses/${slug}`)),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["teacher-courses"] });
+    },
+  });
+}
+
+export interface UpdateCoursePayload {
+  title?: string;
+  description?: string;
+  imageUrl?: string;
+  price?: number;
+}
+
+export function useUpdateCourse(slug: string) {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (payload: UpdateCoursePayload) =>
+      unwrap(apiClient.patch(`/teacher/courses/${slug}`, payload)),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["teacher-courses"] });
+      queryClient.invalidateQueries({ queryKey: ["teacher-course", slug] });
     },
   });
 }
@@ -98,7 +129,7 @@ export function useUploadLessonPdf(courseSlug: string | undefined) {
     }) => {
       const formData = new FormData();
       formData.append("pdf", file);
-      if (pages) formData.append("pages", String(pages));
+      if (pages !== undefined) formData.append("pages", String(pages));
       return unwrap<{ lesson: ApiTeacherOwnLesson }>(
         apiClient.post(`/teacher/lessons/${lessonId}/pdf`, formData, {
           headers: { "Content-Type": "multipart/form-data" },
@@ -107,6 +138,43 @@ export function useUploadLessonPdf(courseSlug: string | undefined) {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["teacher-course", courseSlug] });
+    },
+  });
+}
+
+export function useGetLessonQuiz(lessonId: string | undefined) {
+  return useQuery({
+    queryKey: ["teacher-lesson-quiz", lessonId],
+    queryFn: () =>
+      unwrap<{ quiz: ApiTeacherQuiz }>(
+        apiClient.get(`/teacher/lessons/${lessonId}/quiz`)
+      ).then((d) => d.quiz),
+    enabled: Boolean(lessonId),
+  });
+}
+
+export interface UpsertQuizPayload {
+  durationMinutes: number;
+  questions: {
+    id?: string;
+    question: string;
+    contentType: "AR" | "CODE";
+    codeLanguage?: "PYTHON" | "JAVASCRIPT" | null;
+    correctIndex: number;
+    order: number;
+    options: { id?: string; text: string; order: number }[];
+  }[];
+}
+
+export function useUpsertQuiz(lessonId: string | undefined) {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (payload: UpsertQuizPayload) =>
+      unwrap<{ quiz: ApiTeacherQuiz }>(
+        apiClient.put(`/teacher/lessons/${lessonId}/quiz`, payload)
+      ).then((d) => d.quiz),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["teacher-lesson-quiz", lessonId] });
     },
   });
 }
@@ -121,44 +189,6 @@ export function useUploadImage() {
           headers: { "Content-Type": "multipart/form-data" },
         })
       ).then((d) => d.url);
-    },
-  });
-}
-
-export function useMyLessonQuiz(lessonId: string | undefined) {
-  return useQuery({
-    queryKey: ["teacher-lesson-quiz", lessonId],
-    queryFn: () =>
-      unwrap<{ quiz: ApiTeacherQuiz }>(apiClient.get(`/teacher/lessons/${lessonId}/quiz`)).then(
-        (d) => d.quiz
-      ),
-    enabled: Boolean(lessonId),
-    retry: false,
-  });
-}
-
-export interface UpsertQuizPayload {
-  durationMinutes: number;
-  questions: {
-    question: string;
-    imageUrl?: string;
-    contentType: "AR" | "EN" | "CODE";
-    codeLanguage?: "PYTHON" | "JAVASCRIPT";
-    correctIndex: number;
-    options: { text?: string; imageUrl?: string }[];
-  }[];
-}
-
-export function useUpsertQuiz(lessonId: string | undefined, courseSlug: string | undefined) {
-  const queryClient = useQueryClient();
-  return useMutation({
-    mutationFn: (payload: UpsertQuizPayload) =>
-      unwrap<{ quiz: ApiTeacherQuiz }>(
-        apiClient.put(`/teacher/lessons/${lessonId}/quiz`, payload)
-      ).then((d) => d.quiz),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["teacher-lesson-quiz", lessonId] });
-      queryClient.invalidateQueries({ queryKey: ["teacher-course", courseSlug] });
     },
   });
 }
